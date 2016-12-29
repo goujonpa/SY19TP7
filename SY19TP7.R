@@ -17,6 +17,7 @@ library(nnet) # Neural networks
 library(ggplot2) # Nice plots
 library(e1071) # SVM
 library(randomForest) # Random Forest mdr
+library(caret) # for the createfolds for 6-fold CV
 
 # >>> First we want to reduce X size by ignoring the black pixels
 # Xp is X without the useless pixels (but cannot be displayed)
@@ -46,21 +47,52 @@ prcf = cbind(prc, y)
 # 216 /5 not round 
 # 216 / 6 = 36 
 # => WE WILL USE THE 6-FOLDS CROSS VALIDATION
+# Create 6 folds of 36 individuals
+folds = createFolds(y, k=6)
 
 # >>>>> LDA / QDA
 # source("./ldaqda.R)
 
 # >>>>> SVM
 # source("./svm.R")
-prcf.svm.model = svm(as.factor(y)~., data=prcf, scale=F)
-prcf.svm.pred = predict(prcf.svm.model, newdata=prcf)
-# 0% training error oklm
-length(which(prcf.svm.pred != y))/length(y)
 
-Xpsf.svm.model = svm(as.factor(y)~., data=Xpsf, scale=F)
-Xpsf.svm.pred = predict(Xpsf.svm.model, newdata=Xpsf)
-# 0.0092.. 
-length(which(Xpsf.svm.pred != y))/length(y)
+# as we are big tunning fans, we are primarily going to tune our model
+# in order to choose the model we will use and try to optimise
+prcf.svm.tune = tune(
+    svm, 
+    as.factor(y)~., 
+    data=prcf,
+    ranges=list(
+        kernel=c("linear", "polynomial", "radial", "sigmoid"),
+        cost=c(0.0001, 0.001, 0.01, 0.1, 1:10),
+        gamma=c(0.0001, 0.001, 0.01, 0.1),
+        degree=c(1:5)
+    )
+)
+
+# THEN HERE : plot the tuning results
+
+# THEN HERE optimise cost
+
+# THEN HERE CONFUSION MATRIX
+
+# THEN HERE ROC CURVE (if possible)
+
+# primary analysis of different models using 6-folds CV to evaluate the test error 
+    # fit the models
+    prcf.svm.model = svm(as.factor(y)~., data=prcf, scale=F)
+    prcf.svm.pred = predict(prcf.svm.model, newdata=prcf)
+    # 0% training error oklm
+    length(which(prcf.svm.pred != y))/length(y)
+    
+    Xpsf.svm.model = svm(as.factor(y)~., data=Xpsf, scale=F)
+    Xpsf.svm.pred = predict(Xpsf.svm.model, newdata=Xpsf)
+    # 0.0092.. 
+    length(which(Xpsf.svm.pred != y))/length(y)
+    
+    
+}
+
 
 # >>>>> NN
 # source("./nn.R")
