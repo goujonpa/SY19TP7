@@ -141,17 +141,56 @@ svm_sigmoid_analysis(X, y, filename="", main="") {
     return (new_cost)
 }
 
-svm_conf_matrix = function(X, y, filename="", main="") {
+assignclass = function(x) {
+    # EXPERIMENTAL : TO BE USED IN AN APPLY( , , FUN )
+    # testing to build a function that assigns the most 
+    # predicted class to an individual
+    return (sample(names(which(table(x) == max(table(x)))),1))
+}
+
+svm_conf_matrix = function(X, y, cost, filename="", main="") {
     # Use a 6-fold cross validation method to build a prediction
     # and the associated confusion matrix
     
+    # TO BE EXTENDED WITH MORE PARAMETERS THAN JUST COST WHEN WE HAVE TIME
+    
     # >>>>> Initial DATA FRAME
+    df = cbind(as.data.frame(X), y)
+    folds = createFolds(y, k=6)
     
+    # an array to save the different confusion matrix over time
+    confs = array(dim=c(6, 6, 6))
+    # a matrix to add the different confusion matrix over time
+    conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
+    # a test error vector to store the test errors over time
+    tst_errors = vector(length=6)
     
+    for (k in 1:6) {
+        # split into folds
+        train.df = df[-folds[[k]],]
+        test.df = df[folds[[k]],]
+        
+        # fit and predict
+        model = svm(as.factor(y)~., data=train.df, kernel="sigmoid", cost=cost)
+        preds = predict(model, newdata=test.df)
+        
+        # build the confusion matrix
+        confs[,,k] = table(test.df$y, preds)
+        conf_matrix = conf_matrix + confs[,,k]
+        
+        # measure the test error
+        tst_errors[k] = length(which(test.df$y != preds))/length(test.df$y)
+    }
     
+    # mean it
+    tst_err = mean(tst_errors)
+    
+    # save the stats
+    write.csv(conf_matrix, file=paste("./csv/svm/conf_matrix_", filename, ".csv", sep=""))
+    write.csv(tst_err, file=paste("./csv/svm/tst_err_", filename, ".csv", sep=""))
+    
+    return (conf_matrix)
 }
-    
-    
-    
-    
+
+
     
