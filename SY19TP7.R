@@ -112,8 +112,10 @@ conf_matrix = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Com
 #svm_analysis(Xps, y, filename="raw", main="Raw")
 
 # >>>>> Random Forests 
-# source("./randomf.R")
-
+source("./randomf.R")
+r1 = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+conf_matrix =  rf_conf_matrix(prc, y, mtry=r1$mtry, ntree=r1$ntree, filename="prcomp", main="Pr. Comp.")
+    
 # >>>>> NN
 # source("./nn.R")
 
