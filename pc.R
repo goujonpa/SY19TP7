@@ -6,14 +6,14 @@
 # custom principal component function
 # X : data matrix
 
-pcf = function(X, y) {
+pc_analysis = function(X, y) {
     # NOTE : from web sources, prcomp is prefered
     
     pc = prcomp(X)
-    pdf("./plots/prcomp_xps.pdf")
+    pdf("./plots/pc/pc_plot.pdf")
     plot(pc)
     dev.off()
-    pdf("./plots/prcomp_xps2.pdf")
+    pdf("./plots/pc/pc_biplot.pdf")
     biplot(pc)
     dev.off()
     
@@ -22,7 +22,7 @@ pcf = function(X, y) {
     pc$varsprop = pc$vars / sum(pc$vars)
     pc$cumvarsprop = cumsum(pc$varsprop)
     
-    pdf("./plots/pca1.pdf")
+    pdf("./plots/pc/pc_propvarexp.pdf")
     plot(pc$varsprop, 
          xlab = "Principal Component", 
          ylab="Proportion of variance explained",
@@ -30,7 +30,7 @@ pcf = function(X, y) {
          ylim = c(0,0.2), type="h")
     dev.off()
     
-    pdf("./plots/pca2.pdf")
+    pdf("./plots/pc/pc_propvarexp2.pdf")
     plot(pc$varsprop[1:50], 
          xlab = "Principal Component", 
          ylab="Proportion of variance explained",
@@ -38,7 +38,7 @@ pcf = function(X, y) {
          ylim = c(0,0.2), type="h")
     dev.off()
     
-    pdf("./plots/pca3.pdf")
+    pdf("./plots/pc/pc_cumpropvar.pdf")
     plot(pc$cumvarsprop, 
          xlab = "Principal Component", 
          ylab="Cumulative proportion of variance explained",
@@ -53,7 +53,7 @@ pcf = function(X, y) {
     # abline(h=pc$cumvarsprop[15])
     
     # >>>>> FIRST TWO PRINCIPAL COMPONENT PLOT
-    pdf("./plots/2prcomp.pdf")
+    pdf("./plots/pc/pc_2prcomp.pdf")
     plot(
         pc$x[,1],
         pc$x[,2],
