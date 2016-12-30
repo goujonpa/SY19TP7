@@ -3,8 +3,8 @@
 
 # Display functions
 
-disp = function(m, r, c) {
+disp = function(m, r, c, t="Image display") {
     I = matrix(m, r, c)
     I1 = apply(I,1,rev) 
-    image(t(I1), col=gray(0:255/255))
+    image(t(I1), col=gray(0:255/255), main=t)
 }

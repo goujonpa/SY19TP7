@@ -36,8 +36,16 @@ Xs = scale(X) # nul sur 20
 Xf = cbind(as.data.frame(X),y)
 
 # >>>>> INITIAL DATA VIS
-# Funny : mean face of an expression
+EXPRESSIONS = c(
+    "joie",
+    "surprise",
+    "tristesse",
+    "degout",
+    "colere",
+    "peur"
+)
 
+# Funny : mean face of an expression
 for (i in 1:6) {
     pdf(paste("./plots/meanface_", as.character(i), ".pdf", sep=""))
     ys = apply(
@@ -45,7 +53,32 @@ for (i in 1:6) {
         2, 
         mean
     )
-    disp(ys, 60, 70)
+    disp(ys, 60, 70, paste("Image moyenne : ", EXPRESSIONS[i], sep=""))
+    dev.off()
+}
+
+# useless test :
+# plot(1:4200, X[1,], col=y[1])
+# for (i in 2:216) {
+#     points(1:4200, X[i,], col=y[i])
+# }
+
+# mean repartition for each face expression
+for (j in 1:6) {
+    pdf(paste("./plots/mean_repartition_", as.character(j), ".pdf", sep=""))
+    ys = apply(
+        Xpsf[which(Xpsf$y == as.character(j)),-3661], 
+        2, 
+        mean
+    )
+    plot(
+        1:3660, 
+        ys,
+        col=j,
+        main=paste("Répartition moyenne : ", EXPRESSIONS[j], sep=""),
+        xlab="Component",
+        ylab="Mean Value"
+    )
     dev.off()
 }
 
@@ -54,7 +87,7 @@ for (i in 1:6) {
 source("./prcomp.R")
 # and do a principal component analysis and some plotting
 # on the scaled data
-pc = pcf(Xps)
+pc = pcf(Xps, y)
 
 # Consulting the plots, we decide to select only the 15 first principal component
 # We just select the 15 first principal components
@@ -147,21 +180,7 @@ leg = c(
 legend(0, 1, legend=leg, lty=1, col=colors()[(1:8)*10])
 dev.off()
 
-# Another plotting test :
-dev.off()
-ys = apply(
-    Xpsf[which(Xpsf$y == "5"),-3661], 
-    2, 
-    mean
-)
-plot(
-    1:3660, 
-    ys
-)
-sdv = apply(Xpsf[which(Xpsf$y=="6"),-3661], 2, sd)
-for (i in 1:3660) {
-    segments(i, ys[i]+sdv[i], i, ys[i]-sdv[i])
-}
+
 
 
 
