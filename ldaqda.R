@@ -18,30 +18,54 @@ ldaqda_analysis = function(X, y, filename="", main="") {
     # we will first use the old school manual k-folds cross validation
     # Why 6-folds ? 'cause 216/6 = 36, round number
     folds = createFolds(y, k=6)
+    
+    # an array to save the different confusion matrix over time
+    lda.confs = array(dim=c(6, 6, 6))
+    qda.confs = array(dim=c(6, 6, 6))
+    # a matrix to add the different confusion matrix over time
+    lda.conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
+    qda.conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
+    # a test error vector to store the test errors over time
+    lda.tst_errors = vector(length=6)
+    qda.tst_errors = vector(length=6)
+    
     for (k in 1:6) {
-        # create the folds
-        prcf.train = prcf[-folds[[k]],]
-        Xpsf.train = Xpsf[-folds[[k]],]
-        prcf.test = prcf[folds[[k]],]
-        Xpsf.test = Xpsf[folds[[k]]]
+        # split into folds
+        train.df = df[-folds[[k]],]
+        test.df = df[folds[[k]],]
         
+        # LDA : fit and predict
+        lda.model = lda(as.factor(y)~., data=train.df)
+        lda.preds = predict(lda.model, newdata=test.df)
         
+        # QDA : fit and predict
+        qda.model = qda(as.factor(y)~., data=train.df)
+        qda.preds = predict(model, newdata=test.df)
         
+        # LDA : build the confusion matrix
+        lda.confs[,,k] = table(test.df$y, lda.preds)
+        lda.conf_matrix = lda.conf_matrix + lda.confs[,,k]
+        
+        # QDA : build the confusion matrix
+        qda.confs[,,k] = table(test.df$y, qda.preds)
+        qda.conf_matrix = qda.conf_matrix + qda.confs[,,k]
+        
+        # measure the test error
+        lda.tst_errors[k] = length(which(test.df$y != lda.preds))/length(test.df$y)
+        qda.tst_errors[k] = length(which(test.df$y != qda.preds))/length(test.df$y)
     }
     
+    # mean, sd
+    lda.tst_err = mean(lda.tst_errors)
+    lda.sd_err = sd(lda.tst_errors)
+    qda.tst_err = mean(qda.tst_errors)
+    qda.sd_err = sd(qda.tst_errors)
+    
+    # save the stats
+    # TO DO
 }
 
 
 
-# Let's try LDA on the principal components !
-prcf.lda.model = lda(as.factor(y)~., data=prcf)
-prcf.lda.pred = predict(prcf.lda.model, newdata=prcf)
-# about 13% training error
-length(which(prcf.lda.pred$class != y)) / length(y)
 
 
-# now why not trying the qda too mdrrrr
-prcf.qda.model = qda(as.factor(y)~., data=prcf)
-prcf.qda.pred = predict(prcf.qda.model, newdata=prcf)
-# about 5% training error
-length(which(prcf.qda.pred$class != y)) / length(y)
