@@ -7,7 +7,7 @@
 
 
 library(e1071) # SVM
-library(pROC)
+library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
 
 svm_analysis = function(X, y, filename="", main="") {
@@ -100,7 +100,7 @@ svm_analysis = function(X, y, filename="", main="") {
     return (df.tune$best.parameters)
 }
 
-svm_sigmoid_analysis(X, y, filename="", main="") {
+svm_sigmoid_analysis = function(X, y, filename="", main="") {
     # function to be used when the first analysis tells us that 
     # the sigmoid svm model is the best one to use
     

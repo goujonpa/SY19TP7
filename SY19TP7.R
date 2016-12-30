@@ -92,17 +92,29 @@ pc = pc_analysis(Xps, y)
 prc = as.data.frame(pc$x[,1:15])
 
 # >>>>> LDA / QDA
-# source("./ldaqda.R)
+source("./ldaqda.R")
+l1 = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 
 # >>>>> SVM
 source("./svm.R")
 # first analysis
-r1 = svm_analysis(prc, y, filename="princomp", main="Pr. Comp.")
+r1 = svm_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+# after first analysis we usually get either a linear model with cost = 6
+# or a sigmoid model with cost = 1
+# so we try to optimise both
+new_cost = svm_sigmoid_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 
-svm_analysis(Xps, y, filename="raw", main="Raw")
+# TO DO : linear model optimisation ========================
+
+conf_matrix = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Comp.")
+
+# TO DO : analysis on xps rather than principal components
+#svm_analysis(Xps, y, filename="raw", main="Raw")
+
+# >>>>> Random Forests 
+# source("./randomf.R")
 
 # >>>>> NN
 # source("./nn.R")
 
-# >>>>> Random Forests 
-# source("./randomf.R")
+

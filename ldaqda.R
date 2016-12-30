@@ -7,6 +7,7 @@
 
 library(caret) # for the createfolds for 6-fold CV
 library(MASS) # LDA, QDA
+library(pROC) # ROC
 
 ldaqda_analysis = function(X, y, filename="", main="") {
     
@@ -40,32 +41,57 @@ ldaqda_analysis = function(X, y, filename="", main="") {
         
         # QDA : fit and predict
         qda.model = qda(as.factor(y)~., data=train.df)
-        qda.preds = predict(model, newdata=test.df)
+        qda.preds = predict(qda.model, newdata=test.df)
         
         # LDA : build the confusion matrix
-        lda.confs[,,k] = table(test.df$y, lda.preds)
+        lda.confs[,,k] = table(test.df$y, lda.preds$class)
         lda.conf_matrix = lda.conf_matrix + lda.confs[,,k]
         
         # QDA : build the confusion matrix
-        qda.confs[,,k] = table(test.df$y, qda.preds)
+        qda.confs[,,k] = table(test.df$y, qda.preds$class)
         qda.conf_matrix = qda.conf_matrix + qda.confs[,,k]
         
         # measure the test error
-        lda.tst_errors[k] = length(which(test.df$y != lda.preds))/length(test.df$y)
-        qda.tst_errors[k] = length(which(test.df$y != qda.preds))/length(test.df$y)
+        lda.tst_errors[k] = length(which(test.df$y != lda.preds$class))/length(test.df$y)
+        qda.tst_errors[k] = length(which(test.df$y != qda.preds$class))/length(test.df$y)
     }
     
     # mean, sd
-    lda.tst_err = mean(lda.tst_errors)
-    lda.sd_err = sd(lda.tst_errors)
-    qda.tst_err = mean(qda.tst_errors)
-    qda.sd_err = sd(qda.tst_errors)
+    l=list()
+    l$lda_tst_err = mean(lda.tst_errors)
+    l$lda_sd_err = sd(lda.tst_errors)
+    l$qda_tst_err = mean(qda.tst_errors)
+    l$qda_sd_err = sd(qda.tst_errors)
     
-    # save the stats
-    # TO DO
+    # save the confusion matrix
+    write.csv(
+        lda.conf_matrix, 
+        file=paste("./csv/ldaqda/lda_", filename, "_confmat.csv", sep="")
+    )
+    write.csv(
+        qda.conf_matrix, 
+        file=paste("./csv/ldaqda/qda_", filename, "_confmat.csv", sep="")
+    )
+    write.csv(
+        l, 
+        file=paste("./csv/ldaqda/ldaqda_", filename, "_l.csv", sep="")
+    )
+
+    # plot the error rates
+    pdf(paste("./plots/ldaqda/ldaqda_", filename, "_errrates.pdf", sep=""))
+    boxplot(
+        qda.tst_errors, 
+        lda.tst_errors, 
+        names=list(
+            paste("QDA mean: ", round(l$qda_tst_err, digits=3), sep=""), 
+            paste("LDA mean: ", round(l$lda_tst_err, digits=3), sep="")
+        ), 
+        ylab="Test error estimate", 
+        main=paste(main, " : LDA/QDA error rates", sep=""),
+        col=colors()[c(60,20)] # hop les ptites couleurs
+    )
+    dev.off()
+
+    return (l)
 }
-
-
-
-
 
