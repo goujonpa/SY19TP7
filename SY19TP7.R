@@ -13,9 +13,7 @@ source("./display.R")
 
 # >>> Libs
 
-library(nnet) # Neural networks
 library(ggplot2) # Nice plots
-library(randomForest) # Random Forest mdr
 
 # >>>>> Initial DATA FRAMES 
 # Xp is X without the useless pixels (but cannot be displayed)
@@ -93,12 +91,12 @@ prc = as.data.frame(pc$x[,1:15])
 
 # >>>>> LDA / QDA
 source("./ldaqda.R")
-l1 = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+l = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 
 # >>>>> SVM
 source("./svm.R")
 # first analysis
-r1 = svm_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+r = svm_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 # after first analysis we usually get either a linear model with cost = 6
 # or a sigmoid model with cost = 1
 # so we try to optimise both
@@ -113,10 +111,24 @@ conf_matrix = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Com
 
 # >>>>> Random Forests 
 source("./randomf.R")
-r1 = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+r = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 conf_matrix =  rf_conf_matrix(prc, y, mtry=r1$mtry, ntree=r1$ntree, filename="prcomp", main="Pr. Comp.")
     
 # >>>>> NN
-# source("./nn.R")
+source("./nn.R")
+r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 
+# from the book : 2 parameters to optimise
+# - Number of hidden layer
+# - Weight Decay
+# + starting position of the neural net weights
+# + neural network architecture
+# + scaled input is necessary
+# + simple weight decay doesn't satisfy consistency ==> do we care ?
+# + invariance properties built into 
 
+# + TO DO : EXPORT BEST PERF CSV
+
+# NOTE FROM STUDYING THE BOOKS : BOXPLOT THE TEST ERROR MORE OFTEN !
+
+# Comment on NN : These tools are especially effective in problems with a high signal-to-noise ratio and settings where prediction without interpretation is the goal. They are less effective for problems where the goal is to describe the physical pro- cess that generated the data and the roles of individual inputs.
