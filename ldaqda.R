@@ -31,29 +31,25 @@ ldaqda_analysis = function(X, y, filename="", main="") {
     qda.tst_errors = vector(length=6)
     
     for (k in 1:6) {
-        # split into folds
-        train.df = df[-folds[[k]],]
-        test.df = df[folds[[k]],]
-        
         # LDA : fit and predict
-        lda.model = lda(as.factor(y)~., data=train.df)
-        lda.preds = predict(lda.model, newdata=test.df)
+        lda.model = lda(as.factor(y)~., data=df[-folds[[k]],])
+        lda.preds = predict(lda.model, newdata=df[folds[[k]],])
         
         # QDA : fit and predict
-        qda.model = qda(as.factor(y)~., data=train.df)
-        qda.preds = predict(qda.model, newdata=test.df)
+        qda.model = qda(as.factor(y)~., data=df[-folds[[k]],])
+        qda.preds = predict(qda.model, newdata=df[folds[[k]],])
         
         # LDA : build the confusion matrix
-        lda.confs[,,k] = table(test.df$y, lda.preds$class)
+        lda.confs[,,k] = table(df[folds[[k]],]$y, lda.preds$class)
         lda.conf_matrix = lda.conf_matrix + lda.confs[,,k]
         
         # QDA : build the confusion matrix
-        qda.confs[,,k] = table(test.df$y, qda.preds$class)
+        qda.confs[,,k] = table(df[folds[[k]],]$y, qda.preds$class)
         qda.conf_matrix = qda.conf_matrix + qda.confs[,,k]
         
         # measure the test error
-        lda.tst_errors[k] = length(which(test.df$y != lda.preds$class))/length(test.df$y)
-        qda.tst_errors[k] = length(which(test.df$y != qda.preds$class))/length(test.df$y)
+        lda.tst_errors[k] = length(which(df[folds[[k]],]$y != lda.preds$class))/length(df[folds[[k]],]$y)
+        qda.tst_errors[k] = length(which(df[folds[[k]],]$y != qda.preds$class))/length(df[folds[[k]],]$y)
     }
     
     # mean, sd

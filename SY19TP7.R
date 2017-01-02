@@ -100,14 +100,10 @@ r = svm_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 # after first analysis we usually get either a linear model with cost = 6
 # or a sigmoid model with cost = 1
 # so we try to optimise both
-new_cost = svm_sigmoid_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-
-# TO DO : linear model optimisation ========================
-
-cm = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Comp.")
-
-# TO DO : analysis on xps rather than principal components
-#svm_analysis(Xps, y, filename="raw", main="Raw")
+b1 = svm_sigmoid_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+cm1 = svm_conf_matrix(prc, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp", main="Pr. Comp.")
+b2 = svm_polynomial_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+cm2 = svm_conf_matrix(prc, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp", main="Pr. Comp.")
 
 # >>>>> Random Forests 
 source("./randomf.R")
