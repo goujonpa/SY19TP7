@@ -104,7 +104,7 @@ new_cost = svm_sigmoid_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 
 # TO DO : linear model optimisation ========================
 
-conf_matrix = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Comp.")
+cm = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Comp.")
 
 # TO DO : analysis on xps rather than principal components
 #svm_analysis(Xps, y, filename="raw", main="Raw")
@@ -112,11 +112,16 @@ conf_matrix = svm_conf_matrix(prc, y, new_cost, filename="prcomp", main="Pr. Com
 # >>>>> Random Forests 
 source("./randomf.R")
 r = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-conf_matrix =  rf_conf_matrix(prc, y, mtry=r1$mtry, ntree=r1$ntree, filename="prcomp", main="Pr. Comp.")
+cm =  rf_conf_matrix(prc, y, mtry=r1$mtry, ntree=r1$ntree, filename="prcomp", main="Pr. Comp.")
     
 # >>>>> NN
 source("./nn.R")
 r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+# keep the size, optimise the decay
+d = decay_opt(prc, y, r$size, filename="prcomp", main="Pr. Comp.")
+# build the confusion matrix
+m = nn_conf_matrix(prc, y, size=d$size, decay=d$decay, filename="prcomp", main="Pr. Comp.")
+
 
 # from the book : 2 parameters to optimise
 # - Number of hidden layer
@@ -126,8 +131,6 @@ r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 # + scaled input is necessary
 # + simple weight decay doesn't satisfy consistency ==> do we care ?
 # + invariance properties built into 
-
-# + TO DO : EXPORT BEST PERF CSV
 
 # NOTE FROM STUDYING THE BOOKS : BOXPLOT THE TEST ERROR MORE OFTEN !
 

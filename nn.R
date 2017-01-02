@@ -3,18 +3,10 @@
 
 # Facial expression recognition
 
-# # now let's try neural networks
-# prcf.nn.model = nnet(as.factor(y)~., data=prcf, size=10, linout=T, decay=0.001, maxit=200)
-# prcf.nn.pred = predict(prcf.nn.model, newdata=prc, type="class")
-# # about 3% training error
-# length(which(prcf.nn.pred != y))/length(y)
-
 # Paul GOUJON & Jo COLINA
 # UTC - SY19 - TP7
 
 # Facial expression recognition
-
-# random forest 
 
 library(nnet) # Neural networks
 library(e1071) # tune
@@ -45,7 +37,6 @@ nn_analysis = function(X, y, filename="", main="") {
     for (decay in DECAY) {
         for (size in SIZE) {
             for (i in 1:6) {
-                print(paste("SIZE",size))
                 model = nnet(
                     as.factor(y)~., 
                     data=df[-folds[[i]],], 
@@ -58,6 +49,8 @@ nn_analysis = function(X, y, filename="", main="") {
             perf[nrow(perf)+1,] = c(size, decay, mean(errors), sd(errors))
         }
     }
+    bestpar = perf[which(perf$error == min(perf$error)),]
+    bestperf = bestpar$error
 
     # save performances
     write.csv(
@@ -66,12 +59,12 @@ nn_analysis = function(X, y, filename="", main="") {
     )
     
     write.csv(
-        df.tune$best.parameters,
+        bestpar,
         file=paste("./csv/nn/", filename, "_nn_bestpar.csv", sep="")
     )
     
     write.csv(
-        df.tune$best.performance,
+        bestperf,
         file=paste("./csv/nn/", filename, "_nn_bestperf.csv", sep="")
     )
     
@@ -115,10 +108,73 @@ nn_analysis = function(X, y, filename="", main="") {
     legend(0, 1, legend=leg, lty=1, col=c(1:13))
     dev.off()
     
-    return (df.tune$best.parameters)
+    return (bestpar)
 }
 
-rf_conf_matrix = function(X, y, mtry, ntree, filename="", main="") {
+decay_opt = function(X, y, size, filename="", main="") {
+    # init df
+    df = cbind(as.data.frame(X), y)
+    
+    DECAY = c(1:150)/100
+    folds = createFolds(y, k=6)
+    
+    perf = data.frame(
+        size=integer(),
+        decay=double(),
+        error=double(),
+        sd=double(),
+        stringsAsFactors = F
+    )
+    errors = vector(length=6)
+    
+    # 6-folds CV on decay optimisation
+    for (decay in DECAY) {
+        for (i in 1:6) {
+            model = nnet(
+                as.factor(y)~., 
+                data=df[-folds[[i]],], 
+                size=size, 
+                decay=decay
+            )
+            pred = predict(model, newdata=df[folds[[i]],], type="class")
+            errors[i] = length(which(pred != df[folds[[i]],]$y))/length(df[folds[[i]],]$y)
+        }
+        perf[nrow(perf)+1,] = c(size, decay, mean(errors), sd(errors))
+    }
+    
+    # plot it 
+    pdf(paste("./plots/nn/nn_", filename, "_decayopt.pdf", sep=""))
+    plot(
+        DECAY,
+        perf$error,
+        xlab="Decay parameter value",
+        ylab="Test error estimate",
+        main=paste(main, " : Decay parameter optimisation", sep=""),
+        type="l"
+    )
+    dev.off()
+    
+    # export csv
+    write.csv(perf, file=paste("./csv/nn/nn_", filename, "_decayoptperf.csv", sep=""))
+    
+    # best par export
+    bestpar = perf[which(perf$error == min(perf$error)),]
+    bestperf = bestpar$error
+
+    write.csv(
+        bestpar,
+        file=paste("./csv/nn/", filename, "_nn_bestpar2.csv", sep="")
+    )
+    
+    write.csv(
+        bestperf,
+        file=paste("./csv/nn/", filename, "_nn_bestperf2.csv", sep="")
+    )
+    
+    return (bestpar)
+}
+
+nn_conf_matrix = function(X, y, size, decay, filename="", main="") {
     # Use a 6-fold cross validation method to build a prediction
     # and the associated confusion matrix
     
@@ -136,52 +192,42 @@ rf_conf_matrix = function(X, y, mtry, ntree, filename="", main="") {
     tst_errors = vector(length=6)
     
     for (k in 1:6) {
-        # split into folds
-        train.df = df[-folds[[k]],]
-        test.df = df[folds[[k]],]
-        
         # fit and predict
-        model = randomForest(
+        model = nnet(
             as.factor(y)~., 
-            data=train.df, 
-            ntree=ntree,
-            mtry=mtry
+            data=df[-folds[[k]],], 
+            size=size,
+            decay=decay
         )
-        preds = predict(model, newdata=test.df)
+        preds = predict(model, newdata=df[folds[[k]],], type="class")
         
         # build the confusion matrix
-        confs[,,k] = table(test.df$y, preds)
+        confs[,,k] = table(df[folds[[k]],]$y, preds)
         conf_matrix = conf_matrix + confs[,,k]
         
         # measure the test error
-        tst_errors[k] = length(which(test.df$y != preds))/length(test.df$y)
+        tst_errors[k] = length(which(df[folds[[k]],]$y != preds))/length(df[folds[[k]],]$y)
     }
+
+    # save the stats
+    write.csv(conf_matrix, file=paste("./csv/nn/conf_matrix_", filename, ".csv", sep=""))
+    write.csv(mean(tst_errors), file=paste("./csv/nn/tst_err_", filename, ".csv", sep=""))
     
-    # mean it
-    tst_err = mean(tst_errors)
-    
-    # plot the error rates
-    pdf(paste("./plots/rf/rf_", filename, "_errrates.pdf", sep=""))
+    # boxplot the error rate
+    pdf(paste("./plots/nn/nn_", filename, "_errrate.pdf", sep=""))
     boxplot(
         tst_errors, 
-        names=list(
-            paste("RF mean: ", round(tst_err, digits=3), sep="")
-        ), 
         ylab="Test error estimate", 
         main=paste(
             main, 
-            " : RF error rates (mean: ", 
-            round(tst_err, digits=3),
-            ")",
+            " : NN error rate (mean = ",
+            round(mean(tst_errors), digits=3), 
+            " )",
             sep=""
         ),
-        col=colors()[c(60,20)] # hop les ptites couleurs
+        col=colors()[60] # hop les ptites couleurs
     )
-    dev.off()    
-    
-    # save the stats
-    write.csv(conf_matrix, file=paste("./csv/rf/conf_matrix_", filename, ".csv", sep=""))
-    write.csv(tst_err, file=paste("./csv/rf/tst_err_", filename, ".csv", sep=""))
+    dev.off()
     
     return (conf_matrix)
 }
