@@ -108,7 +108,7 @@ cm2 = svm_conf_matrix(prc, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial",
 # >>>>> Random Forests 
 source("./randomf.R")
 r = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-cm =  rf_conf_matrix(prc, y, mtry=r1$mtry, ntree=r1$ntree, filename="prcomp", main="Pr. Comp.")
+cm =  rf_conf_matrix(prc, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp", main="Pr. Comp.")
     
 # >>>>> NN
 source("./nn.R")

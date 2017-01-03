@@ -167,7 +167,7 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
     df = cbind(as.data.frame(X), y)
     
     # tune parameters
-    COST = c(40:60)/10
+    COST = c(40:120)/10
     GAMMA = 1/(c(10:30)*10)
     
     # cost tuning
@@ -176,6 +176,7 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
         as.factor(y)~., 
         data=df,
         ranges=list(cost=COST, gamma=GAMMA), 
+        degree=1,
         kernel="polynomial"
     )
     bestpar = df.tune$best.parameters

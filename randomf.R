@@ -28,19 +28,18 @@ rf_analysis = function(X, y, filename="", main="") {
     )
     
     perf = df.tune$performances
-    # save performances
+    bestpar = df.tune$best.parameters
+    bestperf = df.tune$best.performance
     write.csv(
         perf, 
         file=paste("./csv/rf/", filename, "_rf_perfomances.csv", sep="")
     )
-    
     write.csv(
-        df.tune$best.parameters,
+        bestpar,
         file=paste("./csv/rf/", filename, "_rf_bestpar.csv", sep="")
     )
-    
     write.csv(
-        df.tune$best.performance,
+        bestperf,
         file=paste("./csv/rf/", filename, "_rf_bestperf.csv", sep="")
     )
     
@@ -76,7 +75,7 @@ rf_analysis = function(X, y, filename="", main="") {
     legend(0, 1, legend=leg, lty=1, col=colors()[(1:8)*10])
     dev.off()
     
-    return (df.tune$best.parameters)
+    return (bestpar)
 }
 
 rf_conf_matrix = function(X, y, mtry, ntree, filename="", main="") {
@@ -136,7 +135,7 @@ rf_conf_matrix = function(X, y, mtry, ntree, filename="", main="") {
             ")",
             sep=""
         ),
-        col=colors()[c(60,20)] # hop les ptites couleurs
+        col=colors()[60] # hop les ptites couleurs
     )
     dev.off()    
     
