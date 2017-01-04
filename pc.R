@@ -44,13 +44,18 @@ pc_analysis = function(X, y) {
          ylab="Cumulative proportion of variance explained",
          main="PCA - cumulative proportion of variance explained",
          ylim = c(0,1), type="l")
+        text(100, pc$cumvarsprop[15] - 0.03, labels=as.character(paste("15 - ", round(pc$cumvarsprop[15], 4), '%')))
+        abline(v=15)
+        abline(h=pc$cumvarsprop[15])
+        
+        text(100, pc$cumvarsprop[25] - 0.03, labels=as.character(paste("25 - ", round(pc$cumvarsprop[25], 4), '%')))
+        abline(v=25)
+        abline(h=pc$cumvarsprop[25])
+        
+        text(100, pc$cumvarsprop[50] - 0.03, labels=as.character(paste("50 - ",  round(pc$cumvarsprop[50], 4), '%')))
+        abline(v=50)
+        abline(h=pc$cumvarsprop[50])
     dev.off()
-    
-    # TO DO : IMPROVE CUMULATIVE VARIANCE PLOT
-    # pc$cumvarsprop
-    # text(100, pc$cumvarsprop[15], labels = as.character(pc$cumvarsprop[15]))
-    # abline(v=15)
-    # abline(h=pc$cumvarsprop[15])
     
     # >>>>> FIRST TWO PRINCIPAL COMPONENT PLOT
     pdf("./plots/pc/pc_2prcomp.pdf")

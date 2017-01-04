@@ -85,13 +85,26 @@ source("./pc.R")
 # on the scaled data
 pc = pc_analysis(Xps, y)
 
-# Consulting the plots, we decide to select only the 15 first principal component
-# We just select the 15 first principal components
+# Consulting the plots, we decide to select only the 15, 25, and 50 first principal components
+# We can then make comparisons between those and choose the best fitting model
+
+###### 15 PCA - 64% Variance
 prc = as.data.frame(pc$x[,1:15])
+
+###### 25 PCA - 74% Variance
+prc25 = as.data.frame(pc$x[,1:25])
+
+###### 50 PCA - 85% Variance
+prc50 = as.data.frame(pc$x[,1:50])
 
 # >>>>> LDA / QDA
 source("./ldaqda.R")
 l = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+
+l = ldaqda_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+
+### Remaining too small.
+#l = ldaqda_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
 
 # >>>>> SVM
 source("./svm.R")
@@ -105,10 +118,28 @@ cm1 = svm_conf_matrix(prc, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", fi
 b2 = svm_polynomial_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 cm2 = svm_conf_matrix(prc, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp", main="Pr. Comp.")
 
+r = svm_analysis(prc, y, filename="prcomp25", main="Pr. Comp.")
+b1 = svm_sigmoid_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+cm1 = svm_conf_matrix(prc25, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp25", main="Pr. Comp. (25 pca)")
+b2 = svm_polynomial_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+cm2 = svm_conf_matrix(prc25, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp25", main="Pr. Comp. (25 pca)")
+
+r = svm_analysis(prc, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+b1 = svm_sigmoid_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+cm1 = svm_conf_matrix(prc50, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp50", main="Pr. Comp. (50 pca)")
+b2 = svm_polynomial_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+cm2 = svm_conf_matrix(prc50, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp50", main="Pr. Comp. (50 pca)")
+
 # >>>>> Random Forests 
 source("./randomf.R")
 r = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 cm =  rf_conf_matrix(prc, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp", main="Pr. Comp.")
+
+r = rf_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+cm =  rf_conf_matrix(prc25, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp25", main="Pr. Comp. (25 pca)")
+
+r = rf_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+cm =  rf_conf_matrix(prc50, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp50", main="Pr. Comp. (50 pca)")
     
 # >>>>> NN
 source("./nn.R")
@@ -117,6 +148,14 @@ r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
 d = decay_opt(prc, y, r$size, filename="prcomp", main="Pr. Comp.")
 # build the confusion matrix
 m = nn_conf_matrix(prc, y, size=d$size, decay=d$decay, filename="prcomp", main="Pr. Comp.")
+
+r = nn_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+d = decay_opt(prc25, y, r$size, filename="prcomp25", main="Pr. Comp. (25 pca)")
+m = nn_conf_matrix(prc25, y, size=d$size, decay=d$decay, filename="prcomp25", main="Pr. Comp. (25 pca)")
+
+r = nn_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+d = decay_opt(prc50, y, r$size, filename="prcomp50", main="Pr. Comp. (50 pca)")
+m = nn_conf_matrix(prc50, y, size=d$size, decay=d$decay, filename="prcomp50", main="Pr. Comp. (50 pca)")
 
 
 # from the book : 2 parameters to optimise
