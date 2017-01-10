@@ -38,15 +38,17 @@ source("./pc.R")
 # execute a pca on the standardized pre-treated individuals
 d$pc = pca(d$clean.scaled, d$y)
 d$pc15 = d$pc$x[,1:15]
-d$pc30 = d$pc$x[,1:30]
+d$pc25 = d$pc$x[,1:25]
 d$pc50 = d$pc$x[,1:50]
 d$pc100 = d$pc$x[,1:100]
+d$pc200 = d$pc$x[,1:200]
 # >>> Factor Analysis
 source("./fa.R")
-fa = fa(d$clean, d$y, filename="rawds", main="Raw")
-
-
-
+fa1 = fa(d$clean, d$y, filename="rawds", main="Raw")
+d$clean.fda = fa1$x
+fa2 = fa(d$pc200, d$y, filename="pc200", main="PC200")
+d$pc200.fda = fa2$x
+d$pc200.fda.scaled = fa2$x.scaled
 
 # >>>>> FUNNY : EXPRESSIONS MEAN
 # mathematical mean of the images so that we get the "mean faces" 
@@ -60,19 +62,13 @@ r = mean_faces = exp_mean(d$raw, d$y, d$EXPRESSIONS)
 source("./mean_repartitions.R")
 r = mean_rep(d$clean.scaled, d$y, d$EXPRESSIONS)
 
-
-
-
-
 # >>>>> LDA / QDA
+# Perform LDA and QDA classifications 
 source("./ldaqda.R")
-l = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-l2 = ldaqda_analysis(res, y, filename="megatest", main="Top test")
-
-l = ldaqda_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-
-### Remaining too small.
-#l = ldaqda_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
+l = ldaqda_analysis(d$pc15, y, filename="pc15", main="PC15")
+l = ldaqda_analysis(d$pc25, y, filename="pc25", main="PC25")
+l = ldaqda_analysis(d$clean.fda, y, filename="clfda", main="Raw FDA")
+l = ldaqda_analysis(d$pc200.fda.scaled, y, filename="pc200fda", main="PC200 FDA")
 
 # >>>>> SVM
 source("./svm.R")
