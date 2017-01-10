@@ -72,27 +72,40 @@ l = ldaqda_analysis(d$pc200.fda.scaled, y, filename="pc200fda", main="PC200 FDA"
 
 # >>>>> SVM
 source("./svm.R")
-# first analysis
-r = svm_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-# after first analysis we usually get either a linear model with cost = 6
-# or a sigmoid model with cost = 1
-# so we try to optimise both
-b1 = svm_sigmoid_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-cm1 = svm_conf_matrix(prc, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp", main="Pr. Comp.")
-b2 = svm_polynomial_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-cm2 = svm_conf_matrix(prc, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp", main="Pr. Comp.")
+# on PC15
+r = svm_analysis(d$pc15, d$y, filename="pc15", main="PC15")
+r = svm_sigmoid_analysis(d$pc15, d$y, filename="pc15", main="PC15")
+r = svm_final_analysis(
+    d$pc15, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="sigmoid",
+    filename="pc15", main="PC15")
+r = svm_polynomial_analysis(d$pc15, d$y, filename="pc15", main="PC15")
+r = svm_final_analysis(
+    d$pc15, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="polynomial",
+    filename="pc15", main="PC15")
+# on PC25
+r = svm_analysis(d$pc25, d$y, filename="pc25", main="PC25")
+r = svm_sigmoid_analysis(d$pc25, d$y, filename="pc25", main="PC25")
+r = svm_final_analysis(
+    d$pc25, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="sigmoid",
+    filename="pc25", main="PC25")
+r = svm_polynomial_analysis(d$pc25, d$y, filename="pc25", main="PC25")
+r = svm_final_analysis(
+    d$pc25, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="polynomial",
+    filename="pc25", main="PC25")
+# on PC50
 
-r = svm_analysis(prc, y, filename="prcomp25", main="Pr. Comp.")
-b1 = svm_sigmoid_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-cm1 = svm_conf_matrix(prc25, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp25", main="Pr. Comp. (25 pca)")
-b2 = svm_polynomial_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-cm2 = svm_conf_matrix(prc25, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp25", main="Pr. Comp. (25 pca)")
-
-r = svm_analysis(prc, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-b1 = svm_sigmoid_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-cm1 = svm_conf_matrix(prc50, y, gamma=b1$gamma, cost=b1$cost, kernel="sigmoid", filename="prcomp50", main="Pr. Comp. (50 pca)")
-b2 = svm_polynomial_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-cm2 = svm_conf_matrix(prc50, y, gamma=b2$gamma, cost=b2$cost, kernel="polynomial", filename="prcomp50", main="Pr. Comp. (50 pca)")
 
 # >>>>> Random Forests
 source("./randomf.R")

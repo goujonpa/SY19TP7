@@ -12,7 +12,7 @@ library(caret) # for the createfolds for 6-fold CV
 rf_analysis = function(X, y, filename="", main="") {
     # initial dataframe
     df = cbind(as.data.frame(X), y)
-
+    colnames(df)[ncol(df)]="y"
     # >>>>> FIRST TUNING
     # to determine which model we are going to use and try to optimise
     # trying to test different values of mtry and ntree
@@ -86,6 +86,7 @@ rf_conf_matrix = function(X, y, mtry, ntree, filename="", main="") {
 
     # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
+    colnames(df)[ncol(df)]="y"
     folds = createFolds(y, k=6)
 
     # an array to save the different confusion matrix over time

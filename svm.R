@@ -5,17 +5,16 @@
 
 # SVM analysis function
 
-
 library(e1071) # SVM
 library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
 
 svm_analysis = function(X, y, filename="", main="") {
-    # initial dataframe
     df = cbind(as.data.frame(X), y)
-
-    # >>>>> FIRST TUNING
-    # to determine which model we are going to use and try to optimise
+    colnames(df)[ncol(df)]="y"
+    l = list()
+    
+    # First general tuning
     df.tune = tune(
         svm,
         as.factor(y)~.,
@@ -27,25 +26,18 @@ svm_analysis = function(X, y, filename="", main="") {
         )
     )
 
-    perf = df.tune$performances
-    # save performances
-    write.csv(
-        perf,
-        file=paste("./csv/svm/", filename, "_svm_perfomances.csv", sep="")
-    )
-
-    write.csv(
-        df.tune$best.parameters,
-        file=paste("./csv/svm/", filename, "_svm_bestpar.csv", sep="")
-    )
-
-    write.csv(
-        df.tune$best.performance,
-        file=paste("./csv/svm/", filename, "_svm_bestperf.csv", sep="")
-    )
+    # saving perf
+    xls = paste("./csv/svm/svm_", filename, "initanalysis.xlsx", sep="")
+    l$perf = df.tune$performances
+    perf = l$perf
+    l$bestpar = df.tune$best.parameters
+    l$bestperf = df.tune$best.performance
+    write.xlsx(l$bestperf, xls, sheetName="Best Perf.")
+    write.xlsx(l$bestpar, xls, sheetName="Best Par.", append=T)
+    write.xlsx(l$perf, xls, sheetName="Perf.", append=T)
 
     # plot the tuning perfs
-    pdf(paste("./plots/svm/", filename, "_svm_tune1.pdf", sep=""))
+    pdf(paste("./plots/svm/svm_", filename, "_init.pdf", sep=""))
     layout(cbind(1,2), widths=c(7,3))
     plot(
         1,
@@ -97,127 +89,109 @@ svm_analysis = function(X, y, filename="", main="") {
     legend(0, 1, legend=leg, lty=1, col=colors()[(1:8)*10])
     dev.off()
 
-    return (df.tune$best.parameters)
+    return (l)
 }
 
 svm_sigmoid_analysis = function(X, y, filename="", main="") {
-    # function to be used when the first analysis tells us that
-    # the sigmoid svm model is the best one to use
-
-    # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
+    colnames(df)[ncol(df)]="y"
+    l = list()
+    XLS = paste("./csv/svm/svm_", filename, "_sigmoid.xlsx", sep="")
 
     # tune parameters
-    COST = c(5:15)/10
-    GAMMA = 1/(c(10:30)*10)
+    l$COST = c(5:15)/10
+    l$GAMMA = 1/(c(10:30)*10)
 
-    # cost tuning
+    # first, gamma tuning
     df.tune = tune(
         svm,
         as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST, gamma=GAMMA),
+        ranges=list(cost=l$COST, gamma=l$GAMMA),
         kernel="sigmoid"
     )
-    bestpar = df.tune$best.parameters
-    bestperf = df.tune$best.performance
-    write.csv(
-        bestpar,
-        file=paste("./csv/svm/", filename, "_sigmoidsvm_bestpar.csv", sep="")
-    )
-    write.csv(
-        bestperf,
-        file=paste("./csv/svm/", filename, "_sigmoidsvm_bestperf.csv", sep="")
-    )
+    l$bestpar1 = df.tune$best.parameters
+    l$bestperf1 = df.tune$best.performance
+    write.xlsx(l$bestpar1, XLS, sheetName="Best Par.1")
+    write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.1", append=T)
 
+    # gamma fixed, cost tuning
     df.tune2 = tune(
         svm,
         as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST),
-        gamma=bestpar$gamma,
+        ranges=list(cost=l$COST),
+        gamma=l$bestpar1$gamma,
         kernel="sigmoid"
     )
-    perf = df.tune2$performances
-    bestpar$cost = df.tune2$best.parameters$cost
-    bestperf = df.tune2$best.performance
-    pdf(paste("./plots/svm/sigmoid2_", filename, "_tune.pdf", sep=""))
-    plot(perf$cost, perf$error, type="l", ylab="Test error estimate", xlab="Cost", main=paste(main, " : SVM cost optimisation"))
+    
+    # saving perf
+    l$perf2 = df.tune2$performances
+    perf = l$perf2
+    l$bestpar2 = df.tune2$best.parameters
+    l$bestperf2 = df.tune2$best.performance
+    write.xlsx(l$perf2, XLS, sheetName="Perf.2", append=T)
+    write.xlsx(l$bestpar1, XLS, sheetName="Best Par.2", append=T)
+    write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.2", append=T)
+    
+    # plotting the cost optimisation
+    pdf(paste("./plots/svm/svm_", filename, "_sigtune.pdf", sep=""))
+    plot(perf$cost, perf$error, type="l", ylab="Test error estimate", xlab="Cost", main=paste(main, " : Sig. SVM cost optimisation"))
     dev.off()
-    write.csv(
-        bestpar,
-        file=paste("./csv/svm/", filename, "_sigmoid2_svm_bestpar.csv", sep="")
-    )
-    write.csv(
-        bestperf,
-        file=paste("./csv/svm/", filename, "_sigmoid2_svm_bestperf.csv", sep="")
-    )
 
-    # TO DO if we got time to waste
-    # - coef0 optimisation
-
-    return (bestpar)
+    return (l)
 }
 
 svm_polynomial_analysis = function(X, y, filename="", main="") {
-    # function to be used when the first analysis tells us that
-    # the sigmoid svm model is the best one to use
-
-    # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
-
+    colnames(df)[ncol(df)]="y"
+    l = list()
+    XLS = paste("./csv/svm/svm_", filename, "_polynomial.xlsx", sep="")
+    
     # tune parameters
-    COST = c(40:120)/10
-    GAMMA = 1/(c(10:30)*10)
+    l$COST = c(40:120)/10
+    l$GAMMA = 1/(c(10:30)*10)
 
     # cost tuning
     df.tune = tune(
         svm,
         as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST, gamma=GAMMA),
+        ranges=list(cost=l$COST, gamma=l$GAMMA),
         degree=1,
         kernel="polynomial"
     )
-    bestpar = df.tune$best.parameters
-    bestperf = df.tune$best.performance
-    write.csv(
-        bestpar,
-        file=paste("./csv/svm/", filename, "_poly_svm_bestpar.csv", sep="")
-    )
-    write.csv(
-        bestperf,
-        file=paste("./csv/svm/", filename, "_poly_svm_bestperf.csv", sep="")
-    )
-
+    
+    # saving first perfs
+    l$bestpar1 = df.tune$best.parameters
+    l$bestperf1 = df.tune$best.performance
+    write.xlsx(l$bestpar1, XLS, sheetName="Best Par.1")
+    write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.1", append=T)
+    
     df.tune2 = tune(
         svm,
         as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST),
-        gamma=bestpar$gamma,
+        ranges=list(cost=l$COST),
+        gamma=l$bestpar1$gamma,
         degree=1,
         kernel="polynomial"
     )
-    perf = df.tune2$performances
-    bestpar$cost=df.tune2$best.parameters$cost
-    bestperf = df.tune2$best.performance
-    pdf(paste("./plots/svm/poly2_", filename, "_tune.pdf", sep=""))
-    plot(perf$cost, perf$error, type="l", ylab="Test error estimate", xlab="Cost", main=paste(main, " : SVM cost optimisation"))
+    # saving perf
+    l$perf2 = df.tune2$performances
+    perf = l$perf2
+    l$bestpar2 = df.tune2$best.parameters
+    l$bestperf2 = df.tune2$best.performance
+    write.xlsx(l$perf2, XLS, sheetName="Perf.2", append=T)
+    write.xlsx(l$bestpar1, XLS, sheetName="Best Par.2", append=T)
+    write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.2", append=T)
+
+    # plotting the cost optimisation
+    pdf(paste("./plots/svm/svm_", filename, "_poltune.pdf", sep=""))
+    plot(perf$cost, perf$error, type="l", ylab="Test error estimate", xlab="Cost", main=paste(main, " : Pol. SVM cost optimisation"))
     dev.off()
-    write.csv(
-        bestpar,
-        file=paste("./csv/svm/", filename, "_poly2_svm_bestpar.csv", sep="")
-    )
-    write.csv(
-        bestperf,
-        file=paste("./csv/svm/", filename, "_poly2_svm_bestperf.csv", sep="")
-    )
-
-    # TO DO if we got time to waste
-    # - coef0 optimisation
-
-    return (bestpar)
+    
+    return (l)
 }
 
 
@@ -228,16 +202,13 @@ assignclass = function(x) {
     return (sample(names(which(table(x) == max(table(x)))),1))
 }
 
-svm_conf_matrix = function(X, y, cost, gamma, kernel, filename="", main="") {
-    # Use a 6-fold cross validation method to build a prediction
-    # and the associated confusion matrix
-
-    # >>>>> Initial DATA FRAME
+svm_final_analysis = function(X, y, cost, gamma, kernel, filename="", main="") {
     df = cbind(as.data.frame(X), y)
+    colnames(df)[ncol(df)]="y"
     folds = createFolds(y, k=6)
+    XLS = paste("./csv/svm/svm_", filename, kernel, "_final.xlsx", sep="")
+    l = list()
 
-    # an array to save the different confusion matrix over time
-    confs = array(dim=c(6, 6, 6))
     # a matrix to add the different confusion matrix over time
     conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
     # a test error vector to store the test errors over time
@@ -245,38 +216,29 @@ svm_conf_matrix = function(X, y, cost, gamma, kernel, filename="", main="") {
 
     for (k in 1:6) {
         # fit and predict
-        if (kernel == "sigmoid") {
-            model = svm(
-                as.factor(y)~.,
-                data=df[-folds[[k]],],
-                kernel=kernel,
-                cost=cost,
-                gamma=gamma
-            )
-        } else {
-            model = svm(
-                as.factor(y)~.,
-                data=df[-folds[[k]],],
-                kernel=kernel,
-                cost=cost,
-                gamma=gamma,
-                degree=1
-            )
-        }
+        model = svm(
+            as.factor(y)~.,
+            data=df[-folds[[k]],],
+            kernel=kernel,
+            cost=cost,
+            gamma=gamma,
+            degree=1
+        )
         preds = predict(model, newdata=df[folds[[k]],])
 
         # build the confusion matrix
-        confs[,,k] = table(df[folds[[k]],]$y, preds)
-        conf_matrix = conf_matrix + confs[,,k]
+        conf_matrix = conf_matrix + table(df[folds[[k]],]$y, preds)
 
         # measure the test error
         tst_errors[k] = length(which(df[folds[[k]],]$y != preds))/length(df[folds[[k]],]$y)
     }
-
-    # save the stats
-    write.csv(conf_matrix, file=paste("./csv/svm/conf_matrix_", filename, kernel, ".csv", sep=""))
-    write.csv(mean(tst_errors), file=paste("./csv/svm/tst_err_", filename, kernel,  ".csv", sep=""))
-
+    # saving perf
+    l$tst_err_mean = mean(tst_errors)
+    l$tst_err_sd = sd(tst_errors)
+    write.xlsx(l, XLS, sheetName="Tst Err.")
+    l$cm = as.data.frame.matrix(conf_matrix)
+    write.xlsx(l$cm, XLS, sheetName="Conf. Mat.", append=T)
+    
     # boxplot the error rate
     pdf(paste("./plots/svm/svm_", filename, kernel, "_errrate.pdf", sep=""))
     boxplot(
@@ -293,5 +255,5 @@ svm_conf_matrix = function(X, y, cost, gamma, kernel, filename="", main="") {
     )
     dev.off()
 
-    return (conf_matrix)
+    return (l)
 }

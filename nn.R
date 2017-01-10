@@ -16,7 +16,7 @@ library(caret) # for the createfolds for 6-fold CV
 nn_analysis = function(X, y, filename="", main="") {
     # initial dataframe
     df = cbind(as.data.frame(X), y)
-
+    colnames(df)[ncol(df)]="y"
     # >>>>> FIRST TUNING
     # to determine which model we are going to use and try to optimise
     # trying to test different values of mtry and ntree
@@ -114,7 +114,7 @@ nn_analysis = function(X, y, filename="", main="") {
 decay_opt = function(X, y, size, filename="", main="") {
     # init df
     df = cbind(as.data.frame(X), y)
-
+    colnames(df)[ncol(df)]="y"
     DECAY = c(1:150)/100
     folds = createFolds(y, k=6)
 
@@ -182,6 +182,7 @@ nn_conf_matrix = function(X, y, size, decay, filename="", main="") {
 
     # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
+    colnames(df)[ncol(df)]="y"
     folds = createFolds(y, k=6)
 
     # an array to save the different confusion matrix over time
