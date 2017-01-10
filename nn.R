@@ -3,28 +3,19 @@
 
 # Facial expression recognition
 
-# Paul GOUJON & Jo COLINA
-# UTC - SY19 - TP7
-
-# Facial expression recognition
-
 library(nnet) # Neural networks
 library(e1071) # tune
 library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
 
 nn_analysis = function(X, y, filename="", main="") {
-    # initial dataframe
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
-    # >>>>> FIRST TUNING
-    # to determine which model we are going to use and try to optimise
-    # trying to test different values of mtry and ntree
-    DECAY = c(1, 5, 10, 25, 50, 75, 100)/100
-    SIZE = c(1:10, 15, 20, 25)
-
+    XLS = paste("./csv/nn/nn_", filename, "_init.xlsx", sep="")
+    l = list()
+    l$DECAY = c(1, 5, 10, 25, 50, 75, 100)/100
+    l$SIZE = c(1:10, 15, 20, 25)
     folds = createFolds(y, k=6)
-
     perf = data.frame(
         size=integer(),
         decay=double(),
@@ -34,8 +25,8 @@ nn_analysis = function(X, y, filename="", main="") {
     )
     errors = vector(length=6)
 
-    for (decay in DECAY) {
-        for (size in SIZE) {
+    for (decay in l$DECAY) {
+        for (size in l$SIZE) {
             for (i in 1:6) {
                 model = nnet(
                     as.factor(y)~.,
@@ -49,27 +40,16 @@ nn_analysis = function(X, y, filename="", main="") {
             perf[nrow(perf)+1,] = c(size, decay, mean(errors), sd(errors))
         }
     }
-    bestpar = perf[which(perf$error == min(perf$error)),]
-    bestperf = bestpar$error
-
-    # save performances
-    write.csv(
-        perf,
-        file=paste("./csv/nn/", filename, "_nn_perfomances.csv", sep="")
-    )
-
-    write.csv(
-        bestpar,
-        file=paste("./csv/nn/", filename, "_nn_bestpar.csv", sep="")
-    )
-
-    write.csv(
-        bestperf,
-        file=paste("./csv/nn/", filename, "_nn_bestperf.csv", sep="")
-    )
+    # saving perf
+    l$bestpar = perf[which(perf$error == min(perf$error)),]
+    l$bestperf = bestpar$error
+    l$perf = perf
+    write.xlsx(l$bestpar, XLS, sheetName="Best Par.")
+    write.xlsx(l$bestperf, XLS, sheetName="Best Perf.", append=T)
+    write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
 
     # plot the tuning perfs
-    pdf(paste("./plots/nn/", filename, "_nn_tune1.pdf", sep=""))
+    pdf(paste("./plots/nn/nn_", filename, "_init.pdf", sep=""))
     layout(cbind(1,2), widths=c(7,3))
     plot(
         1,
@@ -107,15 +87,15 @@ nn_analysis = function(X, y, filename="", main="") {
     )
     legend(0, 1, legend=leg, lty=1, col=c(1:13))
     dev.off()
-
-    return (bestpar)
+    return (l)
 }
 
-decay_opt = function(X, y, size, filename="", main="") {
-    # init df
+nn_decay_opt = function(X, y, size, filename="", main="") {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
-    DECAY = c(1:150)/100
+    XLS = paste("./csv/nn/nn_", filename, "_decayopt.xlsx", sep="")
+    l = list()
+    l$DECAY = c(1:150)/100
     folds = createFolds(y, k=6)
 
     perf = data.frame(
@@ -128,7 +108,7 @@ decay_opt = function(X, y, size, filename="", main="") {
     errors = vector(length=6)
 
     # 6-folds CV on decay optimisation
-    for (decay in DECAY) {
+    for (decay in l$DECAY) {
         for (i in 1:6) {
             model = nnet(
                 as.factor(y)~.,
@@ -141,8 +121,15 @@ decay_opt = function(X, y, size, filename="", main="") {
         }
         perf[nrow(perf)+1,] = c(size, decay, mean(errors), sd(errors))
     }
-
-    # plot it
+    # saving perfs
+    l$bestpar = perf[which(perf$error == min(perf$error)),]
+    l$bestperf = bestpar$error
+    l$perf = perf
+    write.xlsx(l$bestpar, XLS, sheetName="Best Par.")
+    write.xlsx(l$bestperf, XLS, sheetName="Best Perf.", append=T)
+    write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
+    
+    # plot the decay optimisation
     pdf(paste("./plots/nn/nn_", filename, "_decayopt.pdf", sep=""))
     plot(
         DECAY,
@@ -153,43 +140,16 @@ decay_opt = function(X, y, size, filename="", main="") {
         type="l"
     )
     dev.off()
-
-    # export csv
-    write.csv(perf, file=paste("./csv/nn/nn_", filename, "_decayoptperf.csv", sep=""))
-
-    # best par export
-    bestpar = perf[which(perf$error == min(perf$error)),]
-    bestperf = bestpar$error
-
-    write.csv(
-        bestpar,
-        file=paste("./csv/nn/", filename, "_nn_bestpar2.csv", sep="")
-    )
-
-    write.csv(
-        bestperf,
-        file=paste("./csv/nn/", filename, "_nn_bestperf2.csv", sep="")
-    )
-
-    return (bestpar)
+    return (l)
 }
 
-nn_conf_matrix = function(X, y, size, decay, filename="", main="") {
-    # Use a 6-fold cross validation method to build a prediction
-    # and the associated confusion matrix
-
-    # TO BE EXTENDED WITH MORE PARAMETERS THAN JUST COST WHEN WE HAVE TIME
-
-    # >>>>> Initial DATA FRAME
+nn_final_analysis = function(X, y, size, decay, filename="", main="") {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
     folds = createFolds(y, k=6)
-
-    # an array to save the different confusion matrix over time
-    confs = array(dim=c(6, 6, 6))
-    # a matrix to add the different confusion matrix over time
+    XLS = paste("./csv/nn/nn_", filename, "_final.xlsx", sep="")
+    l = list()
     conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
-    # a test error vector to store the test errors over time
     tst_errors = vector(length=6)
 
     for (k in 1:6) {
@@ -201,20 +161,17 @@ nn_conf_matrix = function(X, y, size, decay, filename="", main="") {
             decay=decay
         )
         preds = predict(model, newdata=df[folds[[k]],], type="class")
-
-        # build the confusion matrix
-        confs[,,k] = table(df[folds[[k]],]$y, preds)
-        conf_matrix = conf_matrix + confs[,,k]
-
-        # measure the test error
+        conf_matrix = conf_matrix + table(df[folds[[k]],]$y, preds)
         tst_errors[k] = length(which(df[folds[[k]],]$y != preds))/length(df[folds[[k]],]$y)
     }
+    # saving perf
+    l$mean_tst_err = mean(tst_errors)
+    l$sd_tst_err = sd(tst_errors)
+    write.xlsx(l, XLS, sheetName="Tst Err.")
+    l$cm = as.data.frame.matrix(conf_matrix)
+    write.xlsx(l$cm, XLS, sheetName="Conf. Mat.", append=T)
 
-    # save the stats
-    write.csv(conf_matrix, file=paste("./csv/nn/conf_matrix_", filename, ".csv", sep=""))
-    write.csv(mean(tst_errors), file=paste("./csv/nn/tst_err_", filename, ".csv", sep=""))
-
-    # boxplot the error rate
+        # boxplot the error rate
     pdf(paste("./plots/nn/nn_", filename, "_errrate.pdf", sep=""))
     boxplot(
         tst_errors,
@@ -222,13 +179,12 @@ nn_conf_matrix = function(X, y, size, decay, filename="", main="") {
         main=paste(
             main,
             " : NN error rate (mean = ",
-            round(mean(tst_errors), digits=3),
+            round(l$mean_tst_err, digits=3),
             " )",
             sep=""
         ),
         col=colors()[60] # hop les ptites couleurs
     )
     dev.off()
-
-    return (conf_matrix)
+    return (l)
 }

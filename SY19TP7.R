@@ -104,19 +104,56 @@ r = svm_final_analysis(
     cost=r$bestpar2$cost, 
     kernel="polynomial",
     filename="pc25", main="PC25")
-# on PC50
+# on PC50 : not yet
+
+# on raw fda :
+r = svm_analysis(d$clean.fda , d$y, filename="rawfda", main="Raw FDA")
+r = svm_sigmoid_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
+r = svm_final_analysis(
+    d$clean.fda, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="sigmoid",
+    filename="rawfda", main="Raw FDA")
+r = svm_polynomial_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
+r = svm_final_analysis(
+    d$clean.fda, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="polynomial",
+    filename="rawfda", main="Raw FDA")
+# on PCA + FDA
+r = svm_analysis(d$pc200.fda.scaled , d$y, filename="pc200fda", main="PC200 FDA")
+r = svm_sigmoid_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
+r = svm_final_analysis(
+    d$pc200.fda.scaled, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="sigmoid",
+    filename="pc200fda", main="PC200 FDA")
+r = svm_polynomial_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
+r = svm_final_analysis(
+    d$pc200.fda.scaled, d$y, 
+    gamma=r$bestpar1$gamma, 
+    cost=r$bestpar2$cost, 
+    kernel="polynomial",
+    filename="pc200fda", main="PC200 FDA")
 
 
 # >>>>> Random Forests
 source("./randomf.R")
-r = rf_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-cm =  rf_conf_matrix(prc, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp", main="Pr. Comp.")
-
-r = rf_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-cm =  rf_conf_matrix(prc25, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp25", main="Pr. Comp. (25 pca)")
-
-r = rf_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-cm =  rf_conf_matrix(prc50, y, mtry=r$mtry, ntree=r$ntree, filename="prcomp50", main="Pr. Comp. (50 pca)")
+# On PC15
+r = rf_analysis(d$pc15, d$y, filename="pc15", main="PC15")
+r =  rf_final_analysis(d$pc15, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc15", main="PC15")
+# On PC25
+r = rf_analysis(d$pc25, d$y, filename="pc25", main="PC25")
+r =  rf_final_analysis(d$pc25, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc25", main="PC25")
+# On raw FDA
+r = rf_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
+r =  rf_final_analysis(d$clean.fda, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="rawfda", main="Raw FDA")
+# On PC + FDA
+r = rf_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
+r =  rf_final_analysis(d$pc200.fda.scaled, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc200fda", main="PC200 FDA")
 
 # >>>>> NN
 source("./nn.R")
