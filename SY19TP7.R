@@ -2,99 +2,67 @@
 # UTC - SY19 - TP7
 
 # Facial expression recognition
+rm(list=ls())
 
-# data loading : X individuals, y labels
+# >>>>> LIBS
+library(ggplot2) # Nice plots
+library(xlsx) # Easy xls export 
+source("./display.R") # custom display func
+
+# >>>>> DATA LOADING : X individuals, y labels
 load("./data/data_expressions.rdata")
 
+# >>>>> WORKIN DATA FRAMES
+# We'll use a list to store every working dataset
+d = list()
+d$y = y # labels
+d$raw = X # raw individuals
+d$clean = X[, -which(X[1,] == 0)] # without useless black pixel
+d$raw.scaled = scale(d$raw) # standardized raw x
+d$clean.scaled = scale(d$clean) # standardized cleaned x
+d$EXPRESSIONS = c("joie", "surprise", "tristesse", "degout", "colere", "peur")
 
-# display function
-source("./display.R")
-
-# >>> Libs
-
-library(ggplot2) # Nice plots
-
-# >>>>> Initial DATA FRAMES
-# Xp is X without the useless pixels (but cannot be displayed)
-Xp = X[, -which(X[1,] == 0)]
-
-# standardized Xp
-Xps = scale(Xp)
-
-# as data frame
-Xpsf = cbind(as.data.frame(Xps), y)
-
-# standardized raw X
-Xs = scale(X) # nul sur 20
-
-# as data frame raw X
-Xf = cbind(as.data.frame(X),y)
-
-# >>>>> INITIAL DATA VIS
-EXPRESSIONS = c(
-    "joie",
-    "surprise",
-    "tristesse",
-    "degout",
-    "colere",
-    "peur"
-)
-
-# Funny : mean face of an expression
-for (i in 1:6) {
-    pdf(paste("./plots/meanface_", as.character(i), ".pdf", sep=""))
-    ys = apply(
-        Xf[which(Xf$y == as.character(i)),-3661],
-        2,
-        mean
-    )
-    disp(ys, 60, 70, paste("Image moyenne : ", EXPRESSIONS[i], sep=""))
-    dev.off()
-}
-
-# useless test :
-# plot(1:4200, X[1,], col=y[1])
-# for (i in 2:216) {
-#     points(1:4200, X[i,], col=y[i])
-# }
-
-# mean repartition for each face expression
-for (j in 1:6) {
-    pdf(paste("./plots/mean_repartition_", as.character(j), ".pdf", sep=""))
-    ys = apply(
-        Xpsf[which(Xpsf$y == as.character(j)),-3661],
-        2,
-        mean
-    )
-    plot(
-        1:3660,
-        ys,
-        col=j,
-        main=paste("Répartition moyenne : ", EXPRESSIONS[j], sep=""),
-        xlab="Component",
-        ylab="Mean Value"
-    )
-    dev.off()
-}
-
-# >>> Principal component analysis
-# here we source our pcf custom function
+# >>>>> DIMENSION REDUCTION
+# Two dimension reduction methods : 
+# - PCA : Principal component analysis
+# - FA : Factor Analysis
+# Our experimental protocol will consist in running our 
+# machine learning model fitting on :
+# 1 - The PC15
+# 2 - The PC30
+# 3 - (The PC50)
+# 4 - The Pure FA
+# 5 - The FA over PCA
+# >>> PCA :
 source("./pc.R")
-# and do a principal component analysis and some plotting
-# on the scaled data
-pc = pc_analysis(Xps, y)
+# execute a pca on the standardized pre-treated individuals
+d$pc = pca(d$clean.scaled, d$y)
+d$pc15 = d$pc$x[,1:15]
+d$pc30 = d$pc$x[,1:30]
+d$pc50 = d$pc$x[,1:50]
+d$pc100 = d$pc$x[,1:100]
+# >>> Factor Analysis
+source("./fa.R")
+fa = fa(d$clean, d$y, filename="rawds", main="Raw")
 
-# Consulting the plots, we decide to select only the 15, 25, and 50 first principal components
-# We can then make comparisons between those and choose the best fitting model
 
-###### 15 PCA - 64% Variance
-prc = as.data.frame(pc$x[,1:15])
 
-###### 25 PCA - 74% Variance
-prc25 = as.data.frame(pc$x[,1:25])
 
-###### 50 PCA - 85% Variance
-prc50 = as.data.frame(pc$x[,1:50])
+# >>>>> FUNNY : EXPRESSIONS MEAN
+# mathematical mean of the images so that we get the "mean faces" 
+# for an emotion expression
+source("./mean_faces.R")
+r = mean_faces = exp_mean(d$raw, d$y, d$EXPRESSIONS)
+
+# >>>>> MEAN REPARTITION for each face expression
+# a bit useless but was part of our first explaratory analysis so we'll
+# let it there ...
+source("./mean_repartitions.R")
+r = mean_rep(d$clean.scaled, d$y, d$EXPRESSIONS)
+
+
+
+
 
 # >>>>> LDA / QDA
 source("./ldaqda.R")

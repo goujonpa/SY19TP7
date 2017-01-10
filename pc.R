@@ -3,25 +3,28 @@
 
 # Facial expression recognition
 
-# custom principal component function
-# X : data matrix
-
-pc_analysis = function(X, y) {
+pca = function(X, y) {
     # NOTE : from web sources, prcomp is prefered
-
+    
     pc = prcomp(X)
+    
+    # explained var plot
     pdf("./plots/pc/pc_plot.pdf")
     plot(pc)
     dev.off()
+    
+    # ugly pc plot
     pdf("./plots/pc/pc_biplot.pdf")
     biplot(pc)
     dev.off()
 
-    # proportions of variance explained
+    # proportions of variance explained 
+    # custom calculation
     pc$vars = pc$sdev^2
     pc$varsprop = pc$vars / sum(pc$vars)
     pc$cumvarsprop = cumsum(pc$varsprop)
 
+    # proportion of variance explained, every PC
     pdf("./plots/pc/pc_propvarexp.pdf")
     plot(pc$varsprop,
          xlab = "Principal Component",
@@ -30,6 +33,7 @@ pc_analysis = function(X, y) {
          ylim = c(0,0.2), type="h")
     dev.off()
 
+    # proportion of variance explained, 50 first PCs
     pdf("./plots/pc/pc_propvarexp2.pdf")
     plot(pc$varsprop[1:50],
          xlab = "Principal Component",
@@ -38,26 +42,30 @@ pc_analysis = function(X, y) {
          ylim = c(0,0.2), type="h")
     dev.off()
 
+    # cumulation proportion of variance explained
     pdf("./plots/pc/pc_cumpropvar.pdf")
     plot(pc$cumvarsprop,
-         xlab = "Principal Component",
-         ylab="Cumulative proportion of variance explained",
-         main="PCA - cumulative proportion of variance explained",
-         ylim = c(0,1), type="l")
-        text(100, pc$cumvarsprop[15] - 0.03, labels=as.character(paste("15 - ", round(pc$cumvarsprop[15], 4), '%')))
+        xlab = "Principal Component",
+        ylab="Cumulative proportion of variance explained",
+        main="PCA - cumulative proportion of variance explained",
+        ylim = c(0,1), type="l")
+        text(100, pc$cumvarsprop[15] - 0.03, 
+             labels=as.character(paste("15 - ", round(pc$cumvarsprop[15], 4), '%')))
         abline(v=15)
         abline(h=pc$cumvarsprop[15])
-
-        text(100, pc$cumvarsprop[25] - 0.03, labels=as.character(paste("25 - ", round(pc$cumvarsprop[25], 4), '%')))
+        text(
+            100, pc$cumvarsprop[25] - 0.03, 
+            labels=as.character(paste("25 - ", round(pc$cumvarsprop[25], 4), '%')))
         abline(v=25)
         abline(h=pc$cumvarsprop[25])
-
-        text(100, pc$cumvarsprop[50] - 0.03, labels=as.character(paste("50 - ",  round(pc$cumvarsprop[50], 4), '%')))
+        text(
+            100, pc$cumvarsprop[50] - 0.03, 
+            labels=as.character(paste("50 - ", round(pc$cumvarsprop[50], 4), '%')))
         abline(v=50)
         abline(h=pc$cumvarsprop[50])
-    dev.off()
+        dev.off()
 
-    # >>>>> FIRST TWO PRINCIPAL COMPONENT PLOT
+    # first two principal component plot
     pdf("./plots/pc/pc_2prcomp.pdf")
     plot(
         pc$x[,1],
@@ -74,10 +82,6 @@ pc_analysis = function(X, y) {
     # for (i in 1:3660) {
     #     segments(i, ys[i]+sdv[i], i, ys[i]-sdv[i])
     # }
-
-    # >>>>> PCA VIS
-    #plot(prcf[,1], prcf[,2], col=prcf$y)
-
 
     return (pc)
 }
