@@ -89,9 +89,11 @@ pc = pc_analysis(Xps, y)
 # We just select the 15 first principal components
 prc = as.data.frame(pc$x[,1:15])
 
+
 # >>>>> LDA / QDA
 source("./ldaqda.R")
 l = ldaqda_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
+l2 = ldaqda_analysis(res, y, filename="megatest", main="Top test")
 
 # >>>>> SVM
 source("./svm.R")
