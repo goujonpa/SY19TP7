@@ -13,12 +13,12 @@ library(caret) # for the createfolds for 6-fold CV
 svm_analysis = function(X, y, filename="", main="") {
     # initial dataframe
     df = cbind(as.data.frame(X), y)
-    
-    # >>>>> FIRST TUNING 
+
+    # >>>>> FIRST TUNING
     # to determine which model we are going to use and try to optimise
     df.tune = tune(
-        svm, 
-        as.factor(y)~., 
+        svm,
+        as.factor(y)~.,
         data=df,
         ranges=list(
             kernel=c("linear", "polynomial", "radial", "sigmoid"),
@@ -26,14 +26,14 @@ svm_analysis = function(X, y, filename="", main="") {
             degree=c(1:5)
         )
     )
-    
+
     perf = df.tune$performances
     # save performances
     write.csv(
-        perf, 
+        perf,
         file=paste("./csv/svm/", filename, "_svm_perfomances.csv", sep="")
     )
-    
+
     write.csv(
         df.tune$best.parameters,
         file=paste("./csv/svm/", filename, "_svm_bestpar.csv", sep="")
@@ -48,8 +48,8 @@ svm_analysis = function(X, y, filename="", main="") {
     pdf(paste("./plots/svm/", filename, "_svm_tune1.pdf", sep=""))
     layout(cbind(1,2), widths=c(7,3))
     plot(
-        1, 
-        type="n", 
+        1,
+        type="n",
         xlim=c(0, 10),
         ylim=c(0, 0.8),
         ylab="Test error estimate",
@@ -96,27 +96,27 @@ svm_analysis = function(X, y, filename="", main="") {
     )
     legend(0, 1, legend=leg, lty=1, col=colors()[(1:8)*10])
     dev.off()
-    
+
     return (df.tune$best.parameters)
 }
 
 svm_sigmoid_analysis = function(X, y, filename="", main="") {
-    # function to be used when the first analysis tells us that 
+    # function to be used when the first analysis tells us that
     # the sigmoid svm model is the best one to use
-    
+
     # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
-    
+
     # tune parameters
     COST = c(5:15)/10
     GAMMA = 1/(c(10:30)*10)
-    
+
     # cost tuning
     df.tune = tune(
-        svm, 
-        as.factor(y)~., 
+        svm,
+        as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST, gamma=GAMMA), 
+        ranges=list(cost=COST, gamma=GAMMA),
         kernel="sigmoid"
     )
     bestpar = df.tune$best.parameters
@@ -129,12 +129,12 @@ svm_sigmoid_analysis = function(X, y, filename="", main="") {
         bestperf,
         file=paste("./csv/svm/", filename, "_sigmoidsvm_bestperf.csv", sep="")
     )
-    
+
     df.tune2 = tune(
-        svm, 
-        as.factor(y)~., 
+        svm,
+        as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST), 
+        ranges=list(cost=COST),
         gamma=bestpar$gamma,
         kernel="sigmoid"
     )
@@ -152,30 +152,30 @@ svm_sigmoid_analysis = function(X, y, filename="", main="") {
         bestperf,
         file=paste("./csv/svm/", filename, "_sigmoid2_svm_bestperf.csv", sep="")
     )
-    
+
     # TO DO if we got time to waste
     # - coef0 optimisation
-        
+
     return (bestpar)
 }
 
 svm_polynomial_analysis = function(X, y, filename="", main="") {
-    # function to be used when the first analysis tells us that 
+    # function to be used when the first analysis tells us that
     # the sigmoid svm model is the best one to use
-    
+
     # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
-    
+
     # tune parameters
     COST = c(40:120)/10
     GAMMA = 1/(c(10:30)*10)
-    
+
     # cost tuning
     df.tune = tune(
-        svm, 
-        as.factor(y)~., 
+        svm,
+        as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST, gamma=GAMMA), 
+        ranges=list(cost=COST, gamma=GAMMA),
         degree=1,
         kernel="polynomial"
     )
@@ -189,12 +189,12 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
         bestperf,
         file=paste("./csv/svm/", filename, "_poly_svm_bestperf.csv", sep="")
     )
-    
+
     df.tune2 = tune(
-        svm, 
-        as.factor(y)~., 
+        svm,
+        as.factor(y)~.,
         data=df,
-        ranges=list(cost=COST), 
+        ranges=list(cost=COST),
         gamma=bestpar$gamma,
         degree=1,
         kernel="polynomial"
@@ -213,17 +213,17 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
         bestperf,
         file=paste("./csv/svm/", filename, "_poly2_svm_bestperf.csv", sep="")
     )
-    
+
     # TO DO if we got time to waste
     # - coef0 optimisation
-    
+
     return (bestpar)
 }
 
 
 assignclass = function(x) {
     # EXPERIMENTAL : TO BE USED IN AN APPLY( , , FUN )
-    # testing to build a function that assigns the most 
+    # testing to build a function that assigns the most
     # predicted class to an individual
     return (sample(names(which(table(x) == max(table(x)))),1))
 }
@@ -231,48 +231,48 @@ assignclass = function(x) {
 svm_conf_matrix = function(X, y, cost, gamma, kernel, filename="", main="") {
     # Use a 6-fold cross validation method to build a prediction
     # and the associated confusion matrix
-    
+
     # >>>>> Initial DATA FRAME
     df = cbind(as.data.frame(X), y)
     folds = createFolds(y, k=6)
-    
+
     # an array to save the different confusion matrix over time
     confs = array(dim=c(6, 6, 6))
     # a matrix to add the different confusion matrix over time
     conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
     # a test error vector to store the test errors over time
     tst_errors = vector(length=6)
-    
+
     for (k in 1:6) {
         # fit and predict
         if (kernel == "sigmoid") {
             model = svm(
-                as.factor(y)~., 
-                data=df[-folds[[k]],], 
-                kernel=kernel, 
+                as.factor(y)~.,
+                data=df[-folds[[k]],],
+                kernel=kernel,
                 cost=cost,
                 gamma=gamma
             )
         } else {
             model = svm(
-                as.factor(y)~., 
-                data=df[-folds[[k]],], 
-                kernel=kernel, 
+                as.factor(y)~.,
+                data=df[-folds[[k]],],
+                kernel=kernel,
                 cost=cost,
                 gamma=gamma,
                 degree=1
             )
         }
         preds = predict(model, newdata=df[folds[[k]],])
-        
+
         # build the confusion matrix
         confs[,,k] = table(df[folds[[k]],]$y, preds)
         conf_matrix = conf_matrix + confs[,,k]
-        
+
         # measure the test error
         tst_errors[k] = length(which(df[folds[[k]],]$y != preds))/length(df[folds[[k]],]$y)
     }
-    
+
     # save the stats
     write.csv(conf_matrix, file=paste("./csv/svm/conf_matrix_", filename, kernel, ".csv", sep=""))
     write.csv(mean(tst_errors), file=paste("./csv/svm/tst_err_", filename, kernel,  ".csv", sep=""))
@@ -280,18 +280,18 @@ svm_conf_matrix = function(X, y, cost, gamma, kernel, filename="", main="") {
     # boxplot the error rate
     pdf(paste("./plots/svm/svm_", filename, kernel, "_errrate.pdf", sep=""))
     boxplot(
-        tst_errors, 
-        ylab="Test error estimate", 
+        tst_errors,
+        ylab="Test error estimate",
         main=paste(
-            main, 
+            main,
             " : SVM error rate (mean = ",
-            round(mean(tst_errors), digits=3), 
+            round(mean(tst_errors), digits=3),
             " )",
             sep=""
         ),
         col=colors()[60] # hop les ptites couleurs
     )
     dev.off()
-    
+
     return (conf_matrix)
 }
