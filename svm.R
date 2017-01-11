@@ -8,11 +8,14 @@
 library(e1071) # SVM
 library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
+library(xlsx) # Easy xls export 
+
 
 svm_analysis = function(X, y, filename="", main="") {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
     l = list()
+    XLS = paste("./csv/svm/svm_", filename, "initanalysis.xlsx", sep="")
     
     # First general tuning
     df.tune = tune(
@@ -27,14 +30,19 @@ svm_analysis = function(X, y, filename="", main="") {
     )
 
     # saving perf
-    xls = paste("./csv/svm/svm_", filename, "initanalysis.xlsx", sep="")
     l$perf = df.tune$performances
     perf = l$perf
-    l$bestpar = df.tune$best.parameters
     l$bestperf = df.tune$best.performance
-    write.xlsx(l$bestperf, xls, sheetName="Best Perf.")
-    write.xlsx(l$bestpar, xls, sheetName="Best Par.", append=T)
-    write.xlsx(l$perf, xls, sheetName="Perf.", append=T)
+    write.xlsx(l$bestperf, XLS, sheetName="Best Perf.")
+    l$bestpar = df.tune$best.parameters
+    if (nrow(l$bestpar) > 1) {
+        l$selpar = l$bestpar[with(l$bestpar, order(sd, -cost)),][1,]
+    } else {
+        l$selpar = l$bestpar
+    }
+    write.xlsx(l$selpar, XLS, sheetName="Sel. Par.", append=T)
+    write.xlsx(l$bestpar, XLS, sheetName="Best Par.", append=T)
+    write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
 
     # plot the tuning perfs
     pdf(paste("./plots/svm/svm_", filename, "_init.pdf", sep=""))
@@ -113,6 +121,12 @@ svm_sigmoid_analysis = function(X, y, filename="", main="") {
     l$bestpar1 = df.tune$best.parameters
     l$bestperf1 = df.tune$best.performance
     write.xlsx(l$bestpar1, XLS, sheetName="Best Par.1")
+    if (nrow(l$bestpar1) > 1) {
+        l$selpar1 = l$bestpar1[with(l$bestpar1, order(sd, -cost, -gamma)),][1,]
+    } else {
+        l$selpar1 = l$bestpar1
+    }
+    write.xlsx(l$selpar1, XLS, sheetName="Sel. Par.1", append=T)
     write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.1", append=T)
 
     # gamma fixed, cost tuning
@@ -131,6 +145,12 @@ svm_sigmoid_analysis = function(X, y, filename="", main="") {
     l$bestpar2 = df.tune2$best.parameters
     l$bestperf2 = df.tune2$best.performance
     write.xlsx(l$perf2, XLS, sheetName="Perf.2", append=T)
+    if (nrow(l$bestpar2) > 1) {
+        l$selpar2 = l$bestpar2[with(l$bestpar2, order(sd, -cost)),][1,]
+    } else {
+        l$selpar2 = l$bestpar2
+    }
+    write.xlsx(l$selpar2, XLS, sheetName="Sel. Par.2", append=T)
     write.xlsx(l$bestpar1, XLS, sheetName="Best Par.2", append=T)
     write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.2", append=T)
     
@@ -166,6 +186,12 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
     l$bestpar1 = df.tune$best.parameters
     l$bestperf1 = df.tune$best.performance
     write.xlsx(l$bestpar1, XLS, sheetName="Best Par.1")
+    if (nrow(l$bestpar1) > 1) {
+        l$selpar1 = l$bestpar1[with(l$bestpar1, order(sd, -cost, -gamma)),][1,]
+    } else {
+        l$selpar1 = l$bestpar1
+    }
+    write.xlsx(l$selpar1, XLS, sheetName="Sel. Par.1", append=T)
     write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.1", append=T)
     
     df.tune2 = tune(
@@ -183,6 +209,12 @@ svm_polynomial_analysis = function(X, y, filename="", main="") {
     l$bestpar2 = df.tune2$best.parameters
     l$bestperf2 = df.tune2$best.performance
     write.xlsx(l$perf2, XLS, sheetName="Perf.2", append=T)
+    if (nrow(l$bestpar2) > 1) {
+        l$selpar2 = l$bestpar2[with(l$bestpar2, order(sd, -cost)),][1,]
+    } else {
+        l$selpar2 = l$bestpar2
+    }
+    write.xlsx(l$selpar2, XLS, sheetName="Sel. Par.2", append=T)
     write.xlsx(l$bestpar1, XLS, sheetName="Best Par.2", append=T)
     write.xlsx(l$bestperf1, XLS, sheetName="Best Perf.2", append=T)
 

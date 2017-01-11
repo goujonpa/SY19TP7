@@ -4,6 +4,8 @@
 # Facial expression recognition
 
 library(MASS)
+library(xlsx) # Easy xls export 
+
 
 fa = function(X, y, filename="", main="") {
     l = list()

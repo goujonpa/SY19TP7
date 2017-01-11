@@ -8,6 +8,8 @@
 library(caret) # for the createfolds for 6-fold CV
 library(MASS) # LDA, QDA
 library(pROC) # ROC
+library(xlsx) # Easy xls export 
+
 
 ldaqda_analysis = function(X, y, filename="", main="") {
 

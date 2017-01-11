@@ -77,15 +77,15 @@ r = svm_analysis(d$pc15, d$y, filename="pc15", main="PC15")
 r = svm_sigmoid_analysis(d$pc15, d$y, filename="pc15", main="PC15")
 r = svm_final_analysis(
     d$pc15, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="sigmoid",
     filename="pc15", main="PC15")
 r = svm_polynomial_analysis(d$pc15, d$y, filename="pc15", main="PC15")
 r = svm_final_analysis(
     d$pc15, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="polynomial",
     filename="pc15", main="PC15")
 # on PC25
@@ -93,15 +93,15 @@ r = svm_analysis(d$pc25, d$y, filename="pc25", main="PC25")
 r = svm_sigmoid_analysis(d$pc25, d$y, filename="pc25", main="PC25")
 r = svm_final_analysis(
     d$pc25, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="sigmoid",
     filename="pc25", main="PC25")
 r = svm_polynomial_analysis(d$pc25, d$y, filename="pc25", main="PC25")
 r = svm_final_analysis(
     d$pc25, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="polynomial",
     filename="pc25", main="PC25")
 # on PC50 : not yet
@@ -111,15 +111,15 @@ r = svm_analysis(d$clean.fda , d$y, filename="rawfda", main="Raw FDA")
 r = svm_sigmoid_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
 r = svm_final_analysis(
     d$clean.fda, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="sigmoid",
     filename="rawfda", main="Raw FDA")
 r = svm_polynomial_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
 r = svm_final_analysis(
     d$clean.fda, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="polynomial",
     filename="rawfda", main="Raw FDA")
 # on PCA + FDA
@@ -127,15 +127,15 @@ r = svm_analysis(d$pc200.fda.scaled , d$y, filename="pc200fda", main="PC200 FDA"
 r = svm_sigmoid_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
 r = svm_final_analysis(
     d$pc200.fda.scaled, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="sigmoid",
     filename="pc200fda", main="PC200 FDA")
 r = svm_polynomial_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
 r = svm_final_analysis(
     d$pc200.fda.scaled, d$y, 
-    gamma=r$bestpar1$gamma, 
-    cost=r$bestpar2$cost, 
+    gamma=r$selpar1$gamma, 
+    cost=r$selpar2$cost, 
     kernel="polynomial",
     filename="pc200fda", main="PC200 FDA")
 
@@ -144,32 +144,36 @@ r = svm_final_analysis(
 source("./randomf.R")
 # On PC15
 r = rf_analysis(d$pc15, d$y, filename="pc15", main="PC15")
-r =  rf_final_analysis(d$pc15, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc15", main="PC15")
+r =  rf_final_analysis(d$pc15, d$y, mtry=r$selpar$mtry, ntree=r$selpar$ntree, filename="pc15", main="PC15")
 # On PC25
 r = rf_analysis(d$pc25, d$y, filename="pc25", main="PC25")
-r =  rf_final_analysis(d$pc25, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc25", main="PC25")
+r =  rf_final_analysis(d$pc25, d$y, mtry=r$selpar$mtry, ntree=r$selpar$ntree, filename="pc25", main="PC25")
 # On raw FDA
 r = rf_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA")
-r =  rf_final_analysis(d$clean.fda, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="rawfda", main="Raw FDA")
+r =  rf_final_analysis(d$clean.fda, d$y, mtry=r$selpar$mtry, ntree=r$selpar$ntree, filename="rawfda", main="Raw FDA")
 # On PC + FDA
 r = rf_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
-r =  rf_final_analysis(d$pc200.fda.scaled, d$y, mtry=r$bestpar$mtry, ntree=r$bestpar$ntree, filename="pc200fda", main="PC200 FDA")
+r =  rf_final_analysis(d$pc200.fda.scaled, d$y, mtry=r$selpar$mtry, ntree=r$selpar$ntree, filename="pc200fda", main="PC200 FDA")
 
 # >>>>> NN
 source("./nn.R")
-r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-# keep the size, optimise the decay
-d = decay_opt(prc, y, r$size, filename="prcomp", main="Pr. Comp.")
-# build the confusion matrix
-m = nn_conf_matrix(prc, y, size=d$size, decay=d$decay, filename="prcomp", main="Pr. Comp.")
+# On PC15
+r = nn_analysis(d$pc15, d$y, filename="pc15", main="PC15")
+r = nn_decay_opt(d$pc15, d$y, r$selpar$size, filename="pc15", main="PC15")
+r = nn_final_analysis(d$pc15, d$y, r$selpar$size, r$selpar$decay, filename="pc15", main="PC15")
+# On PC25
+r = nn_analysis(d$pc25, d$y, filename="pc25", main="PC25")
+r = nn_decay_opt(d$pc25, d$y, r$selpar$size, filename="pc25", main="PC25")
+r = nn_final_analysis(d$pc25, d$y, r$selpar$size, r$selpar$decay, filename="pc25", main="PC25")
+# On raw fda
+r = nn_analysis(d$clean.fda, d$y, filename="rawfda", main="Raw FDA", trace=T)
+r = nn_decay_opt(d$clean.fda, d$y, r$selpar$size, filename="rawfda", main="Raw FDA", trace=T)
+r = nn_final_analysis(d$clean.fda, d$y, r$selpar$size, r$selpar$decay, filename="rawfda", main="Raw FDA")
+# On PC + FDA
+r = nn_analysis(d$pc200.fda.scaled, d$y, filename="pc200fda", main="PC200 FDA")
+r = nn_decay_opt(d$pc200.fda.scaled, d$y, r$selpar$size, filename="pc200fda", main="PC200 FDA")
+r = nn_final_analysis(d$pc200.fda.scaled, d$y, r$selpar$size, r$selpar$decay, filename="pc200fda", main="PC200 FDA")
 
-r = nn_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-d = decay_opt(prc25, y, r$size, filename="prcomp25", main="Pr. Comp. (25 pca)")
-m = nn_conf_matrix(prc25, y, size=d$size, decay=d$decay, filename="prcomp25", main="Pr. Comp. (25 pca)")
-
-r = nn_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-d = decay_opt(prc50, y, r$size, filename="prcomp50", main="Pr. Comp. (50 pca)")
-m = nn_conf_matrix(prc50, y, size=d$size, decay=d$decay, filename="prcomp50", main="Pr. Comp. (50 pca)")
 
 
 # from the book : 2 parameters to optimise

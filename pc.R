@@ -2,6 +2,8 @@
 # UTC - SY19 - TP7
 
 # Facial expression recognition
+library(xlsx) # Easy xls export 
+
 
 pca = function(X, y) {
     # NOTE : from web sources, prcomp is prefered

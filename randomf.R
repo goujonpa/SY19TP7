@@ -8,6 +8,8 @@
 library(randomForest) # RF
 library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
+library(xlsx) # Easy xls export 
+
 
 rf_analysis = function(X, y, filename="", main="") {
     df = cbind(as.data.frame(X), y)
@@ -31,6 +33,12 @@ rf_analysis = function(X, y, filename="", main="") {
     l$bestpar = df.tune$best.parameters
     l$bestperf = df.tune$best.performance
     write.xlsx(l$bestperf, XLS, sheetName="Best Perf.")
+    if (nrow(l$bestpar) > 1) {
+        l$selpar = l$bestpar[with(l$bestpar, order(sd, -ntree, mtry)),][1,]
+    } else {
+        l$selpar = l$bestpar
+    }
+    write.xlsx(l$selpar, XLS, sheetName="Sel. Par.", append=T)
     write.xlsx(l$bestpar, XLS, sheetName="Best Par.", append=T)
     write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
     

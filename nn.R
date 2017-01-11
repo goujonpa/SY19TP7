@@ -7,8 +7,10 @@ library(nnet) # Neural networks
 library(e1071) # tune
 library(pROC)  # ROC
 library(caret) # for the createfolds for 6-fold CV
+library(xlsx) # Easy xls export 
 
-nn_analysis = function(X, y, filename="", main="") {
+
+nn_analysis = function(X, y, filename="", main="", trace=F) {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
     XLS = paste("./csv/nn/nn_", filename, "_init.xlsx", sep="")
@@ -32,7 +34,8 @@ nn_analysis = function(X, y, filename="", main="") {
                     as.factor(y)~.,
                     data=df[-folds[[i]],],
                     size=size,
-                    decay=decay
+                    decay=decay,
+                    trace=trace
                 )
                 pred = predict(model, newdata=df[folds[[i]],], type="class")
                 errors[i] = length(which(pred != df[folds[[i]],]$y))/length(df[folds[[i]],]$y)
@@ -42,9 +45,15 @@ nn_analysis = function(X, y, filename="", main="") {
     }
     # saving perf
     l$bestpar = perf[which(perf$error == min(perf$error)),]
-    l$bestperf = bestpar$error
+    l$bestperf = l$bestpar$error
     l$perf = perf
     write.xlsx(l$bestpar, XLS, sheetName="Best Par.")
+    if (nrow(l$bestpar) > 1) {
+        l$selpar = l$bestpar[with(l$bestpar, order(sd, -size, -decay)),][1,]
+    } else {
+        l$selpar = l$bestpar
+    }
+    write.xlsx(l$selpar, XLS, sheetName="Sel. Par.", append=T)
     write.xlsx(l$bestperf, XLS, sheetName="Best Perf.", append=T)
     write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
 
@@ -63,8 +72,8 @@ nn_analysis = function(X, y, filename="", main="") {
     for (i in 1:13){
         text(
             unique(perf$decay),
-            perf[which(perf$size == SIZE[i]),]$error,
-            labels=as.character(SIZE[i]),
+            perf[which(perf$size == l$SIZE[i]),]$error,
+            labels=as.character(l$SIZE[i]),
             col=i
         )
     }
@@ -90,7 +99,7 @@ nn_analysis = function(X, y, filename="", main="") {
     return (l)
 }
 
-nn_decay_opt = function(X, y, size, filename="", main="") {
+nn_decay_opt = function(X, y, size, filename="", main="", trace=F) {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
     XLS = paste("./csv/nn/nn_", filename, "_decayopt.xlsx", sep="")
@@ -114,7 +123,8 @@ nn_decay_opt = function(X, y, size, filename="", main="") {
                 as.factor(y)~.,
                 data=df[-folds[[i]],],
                 size=size,
-                decay=decay
+                decay=decay,
+                trace=trace
             )
             pred = predict(model, newdata=df[folds[[i]],], type="class")
             errors[i] = length(which(pred != df[folds[[i]],]$y))/length(df[folds[[i]],]$y)
@@ -123,16 +133,22 @@ nn_decay_opt = function(X, y, size, filename="", main="") {
     }
     # saving perfs
     l$bestpar = perf[which(perf$error == min(perf$error)),]
-    l$bestperf = bestpar$error
+    l$bestperf = l$bestpar$error
     l$perf = perf
     write.xlsx(l$bestpar, XLS, sheetName="Best Par.")
+    if (nrow(l$bestpar) > 1) {
+        l$selpar = l$bestpar[with(l$bestpar, order(sd, -size, -decay)),][1,]
+    } else {
+        l$selpar = l$bestpar
+    }
+    write.xlsx(l$selpar, XLS, sheetName="Sel. Par.", append=T)
     write.xlsx(l$bestperf, XLS, sheetName="Best Perf.", append=T)
     write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
     
     # plot the decay optimisation
     pdf(paste("./plots/nn/nn_", filename, "_decayopt.pdf", sep=""))
     plot(
-        DECAY,
+        l$DECAY,
         perf$error,
         xlab="Decay parameter value",
         ylab="Test error estimate",
@@ -143,7 +159,7 @@ nn_decay_opt = function(X, y, size, filename="", main="") {
     return (l)
 }
 
-nn_final_analysis = function(X, y, size, decay, filename="", main="") {
+nn_final_analysis = function(X, y, size, decay, filename="", main="", trace=F) {
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
     folds = createFolds(y, k=6)
@@ -158,7 +174,8 @@ nn_final_analysis = function(X, y, size, decay, filename="", main="") {
             as.factor(y)~.,
             data=df[-folds[[k]],],
             size=size,
-            decay=decay
+            decay=decay,
+            trace=trace
         )
         preds = predict(model, newdata=df[folds[[k]],], type="class")
         conf_matrix = conf_matrix + table(df[folds[[k]],]$y, preds)
