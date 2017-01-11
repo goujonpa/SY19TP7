@@ -10,8 +10,9 @@ library(xlsx) # Easy xls export
 fa = function(X, y, filename="", main="") {
     l = list()
     l$lda = lda(X, y)
-    l$x = X %*% l$lda$scaling
-    l$x.scaled = scale(X %*% l$lda$scaling)
+    l$scaling = l$lda$scaling
+    l$x = X %*% l$scaling
+    l$x.scaled = scale(l$x)
     
     # Plot over the first factorial plane
     pdf(paste("./plots/fa/fa_", filename, "_ffp.pdf", sep=""))
