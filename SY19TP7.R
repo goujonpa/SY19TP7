@@ -237,14 +237,11 @@ r = nn_final_analysis(d$pc200.fda.scaled, d$y, r$selpar$size, r$selpar$decay, fi
 
 # >>>>> NeuralNet
 source("./neuralnet.R")
-r = nn_analysis(prc, y, filename="prcomp", main="Pr. Comp.")
-m = nn_conf_matrix(prc, y, size=d$size, filename="prcomp", main="Pr. Comp.")
+r = nn_analysis(d$pc15, d$y, filename="prcomp", main="Pr. Comp.")
+m = nn_conf_matrix(d$pc15, d$y, size=d$size, filename="prcomp", main="Pr. Comp.")
 
-r = nn_analysis(prc25, y, filename="prcomp25", main="Pr. Comp. (25 pca)")
-m = nn_conf_matrix(prc25, y, size=d$size, filename="prcomp25", main="Pr. Comp. (25 pca)")
-
-r = nn_analysis(prc50, y, filename="prcomp50", main="Pr. Comp. (50 pca)")
-m = nn_conf_matrix(prc50, y, size=d$size, filename="prcomp50", main="Pr. Comp. (50 pca)")
+r = nn_analysis(d$pc25, d$y, filename="prcomp25", main="Pr. Comp. (25 pca)")
+m = nn_conf_matrix(d$pc25, d$y, size=d$size, filename="prcomp25", main="Pr. Comp. (25 pca)")
 
 
 # from the book : 2 parameters to optimise

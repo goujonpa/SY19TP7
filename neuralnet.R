@@ -62,9 +62,7 @@ nn_analysis = function(X, y, filename="", main="") {
           hidden=size,
           learningrate = lr,
           algorithm = "backprop",
-          linear.output = F,
-          err.fct = "ce",
-          stepmax = 1e6
+          linear.output = F
         )
         
         ##### THERE IS A BUG WITH COMPUTE
@@ -164,7 +162,7 @@ nn_conf_matrix = function(X, y, size, filename="", main="") {
   for (k in 1:6) {
     # fit and predict
     n <- names(df)
-    folded = as.data.frame(df[-folds[[i]],])
+    folded = as.data.frame(df[-folds[[k]],])
     fact_y = as.factor(folded$y)
     f <- as.formula(paste("folded$y ~", paste(paste("folded$",n[!n %in% "y"]), collapse = " + ")))
     model = neuralnet(
@@ -173,7 +171,7 @@ nn_conf_matrix = function(X, y, size, filename="", main="") {
       algorithm="backprop",
       err.fct = "ce"
     )
-    preds = predict(model, newdata=df[folds[[k]],], type="class")
+    preds = compute(model, newdata=df[folds[[k]],])
     
     # build the confusion matrix
     confs[,,k] = table(df[folds[[k]],]$y, preds)
