@@ -284,17 +284,14 @@ l = nn_final_analysis(
     filename="pc25", main="PC15 FDA",
     FDA=T)
 final_res_df = rbind(final_res_df, as.data.frame(l$fr))
-
-
-
-# from the book : 2 parameters to optimise
-# - Number of hidden layer
-# - Weight Decay
-# + starting position of the neural net weights
-# + neural network architecture
-# + scaled input is necessary
-# + simple weight decay doesn't satisfy consistency ==> do we care ?
-# + invariance properties built into
-
-
-# Comment on NN : These tools are especially effective in problems with a high signal-to-noise ratio and settings where prediction without interpretation is the goal. They are less effective for problems where the goal is to describe the physical pro- cess that generated the data and the roles of individual inputs.
+pdf("./plots/final_boxplots/NN.pdf")
+par(mar=c(3,3,3,1))
+boxplot(
+    as.matrix(final_res_df), 
+    horizontal=T, use.cols=F, las=2,
+    main="Neural Networks", names=as.character(c(41:44)))
+dev.off()
+final_res_df = cbind(final_res_df, apply(final_res_df, 1, mean))
+final_res_df = cbind(final_res_df, apply(final_res_df, 1, sd))
+write.xlsx(final_res_df, "./csv/final_res/NN.xlsx")
+final_res_df = data.frame()
