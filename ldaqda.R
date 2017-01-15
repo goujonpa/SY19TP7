@@ -9,45 +9,51 @@ library(caret) # for the createfolds for 6-fold CV
 library(MASS) # LDA, QDA
 library(pROC) # ROC
 library(xlsx) # Easy xls export 
+source("./fa.R")
 
 
-ldaqda_analysis = function(X, y, filename="", main="", testData=NULL, testData.y=NULL) {
+ldaqda_analysis = function(X, y, filename="", main="", FDA=F, QDA=T) {
+    # filename update
+    if (FDA) {filename = paste(filename, "_withFDA", sep="")}
+    # initial data
     df = cbind(as.data.frame(X),y)
     colnames(df)[ncol(df)]="y"
+    # conf matrix, errors
     lda.conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
     qda.conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
     lda.tst_errors = vector()
     qda.tst_errors = vector()
-    
-    if (is.null(testData)) { # 6 fold cross validation
-        folds = createFolds(y, k=6)
-        for (k in 1:6) {
-            lda.model = lda(as.factor(y)~., data=df[-folds[[k]],])
-            lda.preds = predict(lda.model, newdata=df[folds[[k]],])
-            qda.model = qda(as.factor(y)~., data=df[-folds[[k]],])
-            qda.preds = predict(qda.model, newdata=df[folds[[k]],])
-            lda.conf_matrix = lda.conf_matrix + table(df[folds[[k]],]$y, lda.preds$class)
-            qda.conf_matrix = qda.conf_matrix + table(df[folds[[k]],]$y, qda.preds$class)
-            lda.tst_errors[k] = length(which(df[folds[[k]],]$y != lda.preds$class))/length(df[folds[[k]],]$y)
-            qda.tst_errors[k] = length(which(df[folds[[k]],]$y != qda.preds$class))/length(df[folds[[k]],]$y)
+    # outputs
+    l=list()
+    l$filename = filename
+    # k folds
+    folds = createFolds(y, k=6)
+    for (k in 1:6) {
+        train = df[-folds[[k]],]
+        test = df[folds[[k]],]
+        # FDA
+        if (FDA) {
+            fda = fa(train[,-dim(train)[2]], train[, dim(train)[2]],
+                   test[, -dim(test)[2]], test[, dim(test)[2]],
+                   filename=filename, main=main)
+            train = fda$train.df.scaled
+            test = fda$test.df.scaled
         }
-    } else { # validation set provided
-        testData = as.data.frame(testData)
-        if (is.null(testData.y)) {
-            stop("Please provide validation set y")
+        # LDA
+        lda.model = lda(as.factor(y)~., data=train)
+        lda.preds = predict(lda.model, newdata=test)
+        lda.conf_matrix = lda.conf_matrix + table(test$y, lda.preds$class)
+        lda.tst_errors[k] = length(which(test$y != lda.preds$class))/length(test$y)
+        # QDA
+        if (QDA) {
+            qda.model = qda(as.factor(y)~., data=train)
+            qda.preds = predict(qda.model, newdata=test)
+            qda.conf_matrix = qda.conf_matrix + table(test$y, qda.preds$class)
+            qda.tst_errors[k] = length(which(test$y != qda.preds$class))/length(test$y)
         }
-        lda.model = lda(as.factor(y)~., data=df)
-        lda.preds = predict(lda.model, newdata=testData)
-        qda.model = qda(as.factor(y)~., data=df)
-        qda.preds = predict(qda.model, newdata=testData)
-        lda.conf_matrix = as.data.frame.matrix(table(testData.y, lda.preds$class))
-        qda.conf_matrix = as.data.frame.matrix(table(testData.y, qda.preds$class))
-        lda.tst_errors[1] = length(which(testData.y != lda.preds$class))/length(testData.y)
-        qda.tst_errors[1] = length(which(testData.y != qda.preds$class))/length(testData.y)
     }
 
     # mean, sd
-    l=list()
     l$lda_tst_err = mean(lda.tst_errors)
     l$lda_sd_err = sd(lda.tst_errors)
     l$qda_tst_err = mean(qda.tst_errors)
@@ -75,7 +81,11 @@ ldaqda_analysis = function(X, y, filename="", main="", testData=NULL, testData.y
         col=colors()[c(60,20)] # hop les ptites couleurs
     )
     dev.off()
-
+    # final report output
+    l$fr = matrix(nrow=2, ncol=6)
+    l$fr[1,] = lda.tst_errors
+    if (QDA) {l$fr[2,] = qda.tst_errors} else {l$fr[2,] = rep(NA, 6)}
+    rownames(l$fr) = paste(c("LDA_", "QDA_"), filename, sep="")
     return (l)
 }
 

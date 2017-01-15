@@ -12,9 +12,13 @@ library(xlsx) # Easy xls export
 
 
 rf_analysis = function(X, y, filename="", main="") {
+    # working DF
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
+    # outputs
     l = list()
+    l$filename = filename
+    # xls export name
     XLS = paste("./csv/rf/rf_", filename, "_init.xlsx", sep="")
     l$NTREE = c(10, 50, 100, 250, 500)
     l$MTRY = c(1:ncol(X))
@@ -33,6 +37,7 @@ rf_analysis = function(X, y, filename="", main="") {
     l$bestpar = df.tune$best.parameters
     l$bestperf = df.tune$best.performance
     write.xlsx(l$bestperf, XLS, sheetName="Best Perf.")
+    # sel best par set if > 1
     if (nrow(l$bestpar) > 1) {
         l$selpar = l$bestpar[with(l$bestpar, order(sd, -ntree, mtry)),][1,]
     } else {
@@ -41,9 +46,8 @@ rf_analysis = function(X, y, filename="", main="") {
     write.xlsx(l$selpar, XLS, sheetName="Sel. Par.", append=T)
     write.xlsx(l$bestpar, XLS, sheetName="Best Par.", append=T)
     write.xlsx(l$perf, XLS, sheetName="Perf.", append=T)
-    
     # plot the tuning perfs
-    #pdf(paste("./plots/rf/rf_", filename, "_init.pdf", sep=""))
+    pdf(paste("./plots/rf/rf_", filename, "_init.pdf", sep=""))
     layout(cbind(1,2), widths=c(7,3))
     plot(
         1,
@@ -73,36 +77,44 @@ rf_analysis = function(X, y, filename="", main="") {
     )
     legend(0, 1, legend=leg, lty=1, col=colors()[(1:8)*10])
     dev.off()
-
     return (l)
 }
 
-rf_final_analysis = function(X, y, mtry, ntree, filename="", main="") {
+rf_final_analysis = function(X, y, mtry, ntree, filename="", main="", FDA=F) {
+    if (FDA) {filename = paste(filename, "_withFDA", sep="")}
+    # working DF
     df = cbind(as.data.frame(X), y)
     colnames(df)[ncol(df)]="y"
+    # k folds
     folds = createFolds(y, k=6)
+    # xls export name
     XLS = paste("./csv/rf/rf_", filename, "_final.xlsx", sep="")
     l=list()
     # a matrix to add the different confusion matrix over time
     conf_matrix = matrix(rep(0, 6*6), nrow=6, ncol=6)
     # a test error vector to store the test errors over time
     tst_errors = vector(length=6)
-    
     for (k in 1:6) {
-        # split into folds
-        train.df = df[-folds[[k]],]
-        test.df = df[folds[[k]],]
-
+        train = df[-folds[[k]],]
+        test = df[folds[[k]],]
+        # FDA
+        if (FDA) {
+            fda = fa(train[,-dim(train)[2]], train[, dim(train)[2]],
+                     test[, -dim(test)[2]], test[, dim(test)[2]],
+                     filename=filename, main=main)
+            train = fda$train.df.scaled
+            test = fda$test.df.scaled
+        }
         # fit and predict
         model = randomForest(
             as.factor(y)~.,
-            data=train.df,
+            data=train,
             ntree=ntree,
-            mtry=mtry
+            mtry=max(mtry, (ncol(train)-1))
         )
-        preds = predict(model, newdata=test.df)
-        conf_matrix = conf_matrix + table(test.df$y, preds)
-        tst_errors[k] = length(which(test.df$y != preds))/length(test.df$y)
+        preds = predict(model, newdata=test)
+        conf_matrix = conf_matrix + table(test$y, preds)
+        tst_errors[k] = length(which(test$y != preds))/length(test$y)
     }
     # save perfs
     l$mean_tst_err = mean(tst_errors)
@@ -110,7 +122,6 @@ rf_final_analysis = function(X, y, mtry, ntree, filename="", main="") {
     write.xlsx(l, XLS, sheetName="Tst Err.")
     l$cm = as.data.frame.matrix(conf_matrix)
     write.xlsx(l$cm, XLS, sheetName="Conf. Mat.", append=T)
-    
     # plot the error rates
     pdf(paste("./plots/rf/rf_", filename, "_errrates.pdf", sep=""))
     boxplot(
@@ -129,8 +140,9 @@ rf_final_analysis = function(X, y, mtry, ntree, filename="", main="") {
         col=colors()[60] # hop les ptites couleurs
     )
     dev.off()
+    # final report output
+    l$fr = matrix(nrow=1, ncol=6)
+    l$fr[1,] = tst_errors
+    rownames(l$fr) = paste(c("RF_"), filename, sep="")
     return (l)
 }
-
-
-
